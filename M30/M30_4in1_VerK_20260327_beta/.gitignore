@@ -1,0 +1,25 @@
+# Claude Code local settings (machine-specific permissions)
+.claude/settings.local.json
+
+# Word document (content is in README.md)
+*.docx
+
+# Arduino build output
+build/
+*.bin
+*.elf
+*.map
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+
+# Python cache (from any local scripts)
+__pycache__/
+*.pyc
