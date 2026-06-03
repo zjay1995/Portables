@@ -648,14 +648,12 @@ void SSD1306ZEROMenuRenderer::render(Menu* menu)
   m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
   m_display->drawString(64, 37, "Press S when Stable");
 
-  // Footer: MENU / S / OPTIONS
+  // Footer: SKIP / S  (OPTION removed — no action on these pages)
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, "SKIP");
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, "S");
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
@@ -679,14 +677,12 @@ void SSD1306CalGasMenuRenderer::render(Menu* menu)
   m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
   m_display->drawString(64, 37, "Press S when Stable");
 
-  // Footer: MENU / S / OPTIONS
+  // Footer: SKIP / S  (OPTION removed — no action on these pages)
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, "SKIP");
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, "S");
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
