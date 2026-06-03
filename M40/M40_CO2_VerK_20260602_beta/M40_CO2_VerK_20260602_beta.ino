@@ -33,7 +33,7 @@ using namespace std;
 
 #define USE_SSD1306_DISPLAY
 
-#define FW_VERSION  "M30 CH2O 05/31/2026"
+#define FW_VERSION  "M40 CO2 VerK 06/02/2026"
 #define FW_BUILD    (__DATE__ " " __TIME__)
 
 // ALARM_PIN defined in inc/Globals.h

@@ -467,10 +467,20 @@ void SSD1306CalvalueMenuRenderer::render(Menu* menu)
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawString(64, 0, "Cal Gas Value");
-  m_display->drawLine(0, 16, 256, 16);
+  m_display->drawLine(0, 16, 128, 16);
   m_display->setFont(ArialMT_Plain_16);
-  m_display->drawString(70, 28 , menu->getName());
+  m_display->drawString(70, 24 , menu->getName());
   m_display->setFont(ArialMT_Plain_10);
+
+  // Footer: MENU / SET / OPTION
+  m_display->drawLine(0, 49, 128, 49);
+  m_display->setTextAlignment(TEXT_ALIGN_LEFT);
+  m_display->drawString(0, 51, "MENU");
+  m_display->setTextAlignment(TEXT_ALIGN_CENTER);
+  m_display->drawString(64, 51, "SET");
+  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  m_display->drawString(128, 51, "OPTION");
+  m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
 
@@ -629,14 +639,24 @@ void SSD1306ZEROMenuRenderer::render(Menu* menu)
 
   m_display->clear();
   m_display->setColor(WHITE);
+  m_display->setFont(ArialMT_Plain_10);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
 
   m_display->drawString(64, 0, "Cal:zero  [" + selectedGas.getName() + "]");
-  m_display->drawLine(0, 16, 256, 16);
-  m_display->drawString(64, 21, "“Place ZeroGas on Probe");
-  m_display->drawString(64, 34, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
+  m_display->drawLine(0, 14, 128, 14);
+  m_display->drawString(64, 17, "Place ZeroGas on Probe");
+  m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
+  m_display->drawString(64, 37, "Press S when Stable");
 
-  m_display->drawString(64, 45, "Press S when Stable");
+  // Footer: MENU / S / OPTIONS
+  m_display->drawLine(0, 49, 128, 49);
+  m_display->setTextAlignment(TEXT_ALIGN_LEFT);
+  m_display->drawString(0, 51, "MENU");
+  m_display->setTextAlignment(TEXT_ALIGN_CENTER);
+  m_display->drawString(64, 51, "SET");
+  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  m_display->drawString(128, 51, "OPTION");
+  m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
 
@@ -651,13 +671,23 @@ void SSD1306CalGasMenuRenderer::render(Menu* menu)
 { m_display->clear();
   int calvalue = m_calvalue->getSelectedCalvalue();
   m_display->setColor(WHITE);
+  m_display->setFont(ArialMT_Plain_10);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
   m_display->drawString(64, 0, "Calibration - Cal Gas");
-  m_display->drawLine(0, 16, 256, 16);
-  m_display->drawString(64, 22, String("Cal gas: " + String(calvalue) + " " + SENSOR_UNIT_LABEL).c_str());
-  m_display->drawString(64, 34, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
-  m_display->drawString(64, 45, "Press S when Stable");
+  m_display->drawLine(0, 14, 128, 14);
+  m_display->drawString(64, 17, String("Cal gas: " + String(calvalue) + " " + SENSOR_UNIT_LABEL).c_str());
+  m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
+  m_display->drawString(64, 37, "Press S when Stable");
 
+  // Footer: MENU / S / OPTIONS
+  m_display->drawLine(0, 49, 128, 49);
+  m_display->setTextAlignment(TEXT_ALIGN_LEFT);
+  m_display->drawString(0, 51, "MENU");
+  m_display->setTextAlignment(TEXT_ALIGN_CENTER);
+  m_display->drawString(64, 51, "SET");
+  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  m_display->drawString(128, 51, "OPTION");
+  m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
 
