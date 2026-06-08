@@ -67,7 +67,6 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
 {
   digitalWrite(ALARM_PIN, LOW);  // Turn the alarm off
 
-  const float multiplier = 0.125F; // GAIN 1
   int range = m_range->getSelectedRange();
   int alarm = m_alarm->getSelectedAlarm();
   int lowalarm = m_lowalarm->getSelectedLowalarm();
@@ -636,7 +635,6 @@ SSD1306ZEROMenuRenderer::SSD1306ZEROMenuRenderer(SSD1306Wire* display, DataSourc
 }
 void SSD1306ZEROMenuRenderer::render(Menu* menu)
 {
-  const float multiplier = 0.125F; //GAIN 1
   double sensor_val = m_dataSource->getDoubleValue();
   Gas& selectedGas = m_gasManager->getSelectedGas();
 
