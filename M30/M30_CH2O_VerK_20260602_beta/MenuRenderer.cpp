@@ -196,7 +196,9 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
       }
     } else {
       // PHASE 2: show live reading so user can see the value
-      if (sensorValue > range) {
+      // Blank to "xxx" only past the sensor's over-range limit, not the
+      // user-selectable output range (which can be far below full scale).
+      if (sensorValue > SENSOR_OVERRANGE) {
         m_display->drawString(62, 18, "xxx");
       } else {
         m_display->drawString(62, 18, String(sensorValue, 1));
@@ -210,7 +212,8 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
 
     m_display->setFont(ArialMT_Plain_24);
 
-    if (sensorValue > range) {
+    // Blank to "xxx" only past the sensor's over-range limit (see above).
+    if (sensorValue > SENSOR_OVERRANGE) {
       m_display->drawString(62, 18, "xxx");
     } else {
       m_display->drawString(62, 18, String(sensorValue, 1));
