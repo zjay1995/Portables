@@ -9,6 +9,7 @@
 #include <EEPROM.h>
 #include "CalvalueSet.h"
 #include "AlarmSet.h"
+#include "AnalogSourceInput.h"  // adsMvPerBit() + SENSOR_ADS_GAIN
 #include <RTClib.h>
 
 #define EEPROM_CAL_TIMESTAMP_OFFSET 120  // Make sure this doesn’t conflict
@@ -218,13 +219,17 @@ public:
         Serial.println(calvalue);
         Serial.println(calgasv);
 
-        // Span-rejection guard: a span/zero voltage delta below 20 mV is too
-        // small to produce a reliable slope (disconnected/dead sensor, or no
-        // cal gas applied). Reject without writing slope or cal date so the
-        // run screen keeps the previous calibration and the banner reports
-        // failure. m_calgas / m_zero are both in volts here, so 20 mV = 0.020.
-        if (fabs(m_calgas - m_zero) < 0.020) {
-            Serial.println("Span rejected: |V_cal - V_zero| < 20 mV — slope not saved.");
+        // Span-rejection guard: a span/zero voltage delta that is too small to
+        // produce a reliable slope (disconnected/dead sensor, or no cal gas
+        // applied) is rejected without writing slope or cal date, so the run
+        // screen keeps the previous calibration and the banner reports failure.
+        // The threshold was 20 mV assuming GAIN_ONE-scaled readings; now that
+        // getMiliVolts() reports gain-correct millivolts, scale by the active
+        // gain's LSB so the true-voltage rejection threshold is unchanged
+        // (e.g. 10 mV at GAIN_TWO, 5 mV at GAIN_FOUR).
+        const double minSpanV = 0.020 * (adsMvPerBit(SENSOR_ADS_GAIN) / 0.125);
+        if (fabs(m_calgas - m_zero) < minSpanV) {
+            Serial.println("Span rejected: |V_cal - V_zero| below min span — slope not saved.");
             return;
         }
 

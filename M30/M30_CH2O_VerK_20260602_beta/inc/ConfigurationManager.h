@@ -18,10 +18,15 @@ public:
 class ConfigurationManager : public ParamChangeListener
 {
 
-    const uint16_t EEPROM_SIZE = sizeof(int) * 7 + // Timer, Selected Gas Index, Range, Alarm, Calibration
-                                 sizeof(double) * 10 + // Gas calibration parameters (intercept + slope for 4 gases)
-                                 64 + // Device ID
-                                 32 * 2; // Wi-Fi SSID and Password
+    // The EEPROM layout uses explicit byte offsets (see below) that extend up
+    // to the first-boot "seeded" sentinel at address 250 and the DataLogger
+    // counters around 210-230. The old size-by-component formula evaluated to
+    // 236, which left the sentinel (and those counters) out of bounds: on
+    // ESP32, EEPROM.read() of an out-of-range address returns 0, so the
+    // sentinel never read back as 0xA8 and the defaults re-seeded on EVERY
+    // boot -- silently wiping any saved calibration. Size the region to cover
+    // the whole explicit map with headroom.
+    const uint16_t EEPROM_SIZE = 512;
 	
     const uint8_t EEPROM_TIMER_OFFSET = 0;
     const uint8_t EEPROM_GAS_SELECT_OFFSET = 4;

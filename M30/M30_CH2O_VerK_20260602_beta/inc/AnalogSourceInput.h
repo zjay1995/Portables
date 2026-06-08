@@ -4,6 +4,29 @@
 #include <Adafruit_INA219.h>
 #include <Adafruit_SHT4x.h>
 
+#include "SensorConfig.h"
+
+// ADS1115 LSB size (millivolts per bit) for the configured PGA gain. The
+// driver's readADC_SingleEnded() returns raw counts, so they must be scaled by
+// the gain-specific LSB to recover millivolts. This used to be hardcoded to
+// 0.125 (the GAIN_ONE LSB), which over-reported the detector voltage by 2x on
+// GAIN_TWO profiles, 4x on GAIN_FOUR, and 8x on GAIN_EIGHT. (Calibrated ppm was
+// unaffected because the factor cancels in the slope/intercept ratio, but the
+// "Det: mV" readout and the absolute span-rejection guard were wrong.)
+inline float adsMvPerBit(adsGain_t gain)
+{
+    switch (gain)
+    {
+        case GAIN_TWOTHIRDS: return 0.1875F;    // +/-6.144 V
+        case GAIN_ONE:       return 0.125F;     // +/-4.096 V
+        case GAIN_TWO:       return 0.0625F;    // +/-2.048 V
+        case GAIN_FOUR:      return 0.03125F;   // +/-1.024 V
+        case GAIN_EIGHT:     return 0.015625F;  // +/-0.512 V
+        case GAIN_SIXTEEN:   return 0.0078125F; // +/-0.256 V
+        default:             return 0.125F;
+    }
+}
+
 class AnalogSourceInput
 {
 protected:
@@ -47,7 +70,7 @@ public:
             const int numReadings = 4;
             long total = 0;
             m_lastReadValueTick = now;
-            const float multiplier = 0.125F;
+            const float multiplier = adsMvPerBit(SENSOR_ADS_GAIN); // gain-matched LSB
 
             for (int i = 0; i < numReadings; i++) {
                 total += m_ads1115->readADC_SingleEnded(0) * multiplier;
