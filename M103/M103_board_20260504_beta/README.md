@@ -1,5 +1,5 @@
 # Model 103 (M103) Portable PID Analyzer
-**Firmware:** M103_board_20260504_beta &nbsp;|&nbsp; **Version:** 05/13/26 &nbsp;|&nbsp; **MCU:** ESP32
+**Firmware:** M103_board_20260504_beta &nbsp;|&nbsp; **Version:** 06/09/26 &nbsp;|&nbsp; **MCU:** ESP32
 
 ---
 
@@ -202,6 +202,7 @@ Idx  Screen            Button Access       Notes
 │ ──────────────────── │
 │  SLOPE               │
 │    0.000842          │  6 decimal places, font 4 size 2
+│  FW Version: 06/09/26│
 │  Gas: PID            │
 │ ──────────────────── │
 │  MENU    SET OPTIONS │

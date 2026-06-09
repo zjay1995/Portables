@@ -572,13 +572,15 @@ void TFTCalInfoMenuRenderer::render(Menu* menu) {
   m_display->setTextColor(READING_COLOR, TFT_BLACK);
   drawCenteredString(m_display, slopeStr, 238, 4, 2);
 
-  // --- Gas name ---
-  String gasName = m_gasManager->getSelectedGas().getName();
-  if (gasName == "100" || gasName == "1000") gasName = "PID";
+  // --- Firmware version + gas name ---
   m_display->setTextColor(TFT_LIGHTGREY, TFT_BLACK);
   m_display->setTextFont(2);
   m_display->setTextDatum(TC_DATUM);
   m_display->setTextPadding(W - 8);
+  m_display->drawString("FW Version: " + String(c_FIRMWARE_VERSION), W / 2, H - 65);
+
+  String gasName = m_gasManager->getSelectedGas().getName();
+  if (gasName == "100" || gasName == "1000") gasName = "PID";
   m_display->drawString("Gas: " + gasName, W / 2, H - 45);
   m_display->setTextPadding(0);
 

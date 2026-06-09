@@ -2,6 +2,11 @@
 
 #include "inc/ConfigurationManager.h"
 
+// Firmware version, shown on the boot splash and the Cal Info screen.
+// Update the date when releasing a new build.
+const char* c_FIRMWARE_NAME    = "M103";
+const char* c_FIRMWARE_VERSION = "06/09/26";
+
 const uint8_t c_BUTTON_DOWN_PIN = 13;
 const uint8_t c_BUTTON_S_PIN = 21;
 const uint8_t c_BUTTON_RIGHT_PIN = 14;
