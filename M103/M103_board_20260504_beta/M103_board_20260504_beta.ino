@@ -292,11 +292,11 @@ void setup() {
   CompositeMenu* libraryMenu = new CompositeMenu("LIBRARY", "Main Menu" , gasMenus);
 
   vector<Menu*> sleepTimerMenus;
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("5", "TIMER",  0, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("60", "TIMER", 1, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("120", "TIMER", 2, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("360", "TIMER", 3, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("CONTINUOUS", "TIMER", 4, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("5 min", "TIMER",  0, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("1 hour", "TIMER", 1, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("2 hour", "TIMER", 2, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("6 hour", "TIMER", 3, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("Continuous", "TIMER", 4, &g_sleepTimer, sleepTimerMenuRenderer));
   CompositeMenu* timerMenu = new CompositeMenu("TIMER", "Main Menu" , sleepTimerMenus);
 
   vector<Menu*> rangeMenus;
@@ -389,8 +389,8 @@ void setup() {
   CompositeMenu* calresMenu = new CompositeMenu("Cal Result", "Main Menu", calresMenus);
 
   // --- FINAL MENU STRUCTURE ---
-  // Indices 0-9: normal scrollable settings (DOWN cycles through these).
-  // Indices 10-13: calibration sequence, only reachable via RIGHT from run screen.
+  // Indices 0-10: normal scrollable settings (DOWN cycles through these).
+  // Indices 11-14: calibration sequence, only reachable via RIGHT from run screen.
   vector<Menu*> horizontalMenus;
   horizontalMenus.push_back(runMenu);        // 0
   horizontalMenus.push_back(libraryMenu);    // 1
@@ -401,16 +401,17 @@ void setup() {
   horizontalMenus.push_back(hourMenu);       // 6
   horizontalMenus.push_back(minuteMenu);     // 7
   horizontalMenus.push_back(unitMenu);       // 8  Display unit (ppm / ppb / 1117)
-  horizontalMenus.push_back(calInfoMenu);    // 9  Cal factors & date (view only)
-  horizontalMenus.push_back(calMenu);        // 10 Cal Step 1: Zero
-  horizontalMenus.push_back(calvalueMenu);   // 11 Cal Step 2: set span gas value
-  horizontalMenus.push_back(calgasMenu);     // 12 Cal Step 3: capture span
-  horizontalMenus.push_back(calresMenu);     // 13 Cal result
+  horizontalMenus.push_back(timerMenu);      // 9  Auto power-off idle time
+  horizontalMenus.push_back(calInfoMenu);    // 10 Cal factors & date (view only)
+  horizontalMenus.push_back(calMenu);        // 11 Cal Step 1: Zero
+  horizontalMenus.push_back(calvalueMenu);   // 12 Cal Step 2: set span gas value
+  horizontalMenus.push_back(calgasMenu);     // 13 Cal Step 3: capture span
+  horizontalMenus.push_back(calresMenu);     // 14 Cal result
 
   Serial.println("horizontal menu " + String(horizontalMenus.size()));
   CompositeMenu* verticalMenu = new CompositeMenu("Main Menu", "", horizontalMenus);
   g_mainMenu = verticalMenu;
-  g_mainMenu->setNavLimit(10);  // DOWN only cycles indices 0-9; cal zone (10-13) is right-button only
+  g_mainMenu->setNavLimit(11);  // DOWN only cycles indices 0-10; cal zone (11-14) is right-button only
   g_mainMenu->print();
 
   setupButtons();
@@ -468,6 +469,10 @@ void setup() {
     EEPROM.commit();
   }
 
+  int sleepIdx = EEPROM.read(0);
+  if (sleepIdx > 4) sleepIdx = 2;            // factory default: 2 hour auto-off
+  g_sleepTimer.selectIntervalByIndex(sleepIdx);
+
   g_dataLogger.setLoggingConfig(&g_loggingset, &g_loggingtime);
 }
 
@@ -485,13 +490,13 @@ static void showSavedBanner(const char* msg) {
 void setupButtons() {
   Keyboard* keyboard = new Keyboard();
 
-  // DOWN: advance through regular settings (0-9). In cal zone, escape back to run.
+  // DOWN: advance through regular settings (0-10). In cal zone, escape back to run.
   keyboard->addOnDownPressedFctor([] {
     g_sleepTimer.resetIdleCounter();
     tft.fillScreen(TFT_BLACK);
     if (g_runRenderer) g_runRenderer->invalidate();
     int idx = g_mainMenu->getCurrentIndex();
-    if (idx >= 10) {
+    if (idx >= 11) {
       g_mainMenu->setCurrentMenu(0);  // escape cal sequence
     } else {
       g_mainMenu->moveToNext();
@@ -505,20 +510,20 @@ void setupButtons() {
     g_mainMenu->action();
     g_timeSync.initTimeFromRTC();
 
-    if (idx == 0 || idx == 9) {
+    if (idx == 0 || idx == 10) {
       // Run screen: S triggers logging only. CalInfo: view-only, no banner.
       tft.fillScreen(TFT_BLACK);
       if (g_runRenderer) g_runRenderer->invalidate();
-      if (idx == 9) g_mainMenu->moveToNext();  // calInfo → back to run
+      if (idx == 10) g_mainMenu->moveToNext();  // calInfo → back to run
       return;
     }
 
-    showSavedBanner(idx == 12 ? "CAL COMPLETE" : idx == 13 ? "CAL FINISHED" : "VALUE SAVED");
+    showSavedBanner(idx == 13 ? "CAL COMPLETE" : idx == 14 ? "CAL FINISHED" : "VALUE SAVED");
     if (g_runRenderer) g_runRenderer->invalidate();
 
-    if (idx >= 10 && idx < 13) {
+    if (idx >= 11 && idx < 14) {
       g_mainMenu->setCurrentMenu(idx + 1);  // next cal step
-    } else if (idx == 13) {
+    } else if (idx == 14) {
       g_mainMenu->setCurrentMenu(0);        // cal done → back to run
     } else {
       g_mainMenu->moveToNext();             // next regular setting (wraps to run)
@@ -531,7 +536,7 @@ void setupButtons() {
     tft.fillScreen(TFT_BLACK);
     if (g_runRenderer) g_runRenderer->invalidate();
     if (g_mainMenu->getCurrentIndex() == 0) {
-      g_mainMenu->setCurrentMenu(10);  // jump straight to cal Zero (calInfo is menu-only)
+      g_mainMenu->setCurrentMenu(11);  // jump straight to cal Zero (calInfo is menu-only)
     } else {
       ((CompositeMenu*)g_mainMenu->getCurrentMenu())->moveToNext();
     }

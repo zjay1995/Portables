@@ -7,6 +7,7 @@
 #include <Wire.h>
 #include <EEPROM.h>
 #include "GasManager.h"
+#include "pins.h"
 
 class Range
 {
@@ -55,6 +56,11 @@ public:
             m_selectedRange = index;
             EEPROM.writeInt(72, index);
             EEPROM.commit();
+            // Update the amplifier gain stage immediately — previously only
+            // applied at boot, so a range change needed a power cycle.
+            // Index 0 = 5000 ppm (higher gain). Polarity matches setup();
+            // verify on the bench if the hardware reads opposite.
+            digitalWrite(PID_GAIN_PIN, index == 0 ? HIGH : LOW);
             Serial.print("Range saved: ");
             Serial.println(index);
         }

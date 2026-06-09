@@ -47,20 +47,22 @@ Arduino firmware for ESP32 (Arduino IDE 1.8.x).
  6  Set Hour
  7  Set Minute
  8  Display Unit
- 9  Cal Info           ← last normal menu page (view only)
-── navLimit = 10 ──────────────────────────────────────
-10  Cal Zero           ← RIGHT from run enters here
-11  Cal Gas Value
-12  Cal Span Capture
-13  Cal Result
+ 9  Auto Power-Off     (sleep timer: 5m/1h/2h/6h/continuous)
+10  Cal Info           ← last normal menu page (view only)
+── navLimit = 11 ──────────────────────────────────────
+11  Cal Zero           ← RIGHT from run enters here
+12  Cal Gas Value
+13  Cal Span Capture
+14  Cal Result
 ```
 
 ## Button Logic Summary
-- **DOWN**: advance settings (0–9); if idx ≥ 10 → abort cal → run
-- **S**: save + `showSavedBanner()` + advance; idx 0 and 9 skip banner
-- **RIGHT**: from run → `setCurrentMenu(10)`; elsewhere → cycle submenu values
+- **DOWN**: advance settings (0–10); if idx ≥ 11 → abort cal → run
+- **S**: save + `showSavedBanner()` + advance; idx 0 and 10 skip banner
+- **RIGHT**: from run → `setCurrentMenu(11)`; elsewhere → cycle submenu values
 
 ## EEPROM Key Addresses
+- 0: Auto power-off index (0=5m, 1=1h, 2=2h, 3=6h, 4=continuous)
 - 8–71: Gas intercepts/slopes (doubles, 8 bytes each, 4 gases × 2 × 8)
 - 100: Display unit
 - 120: Cal timestamp string
