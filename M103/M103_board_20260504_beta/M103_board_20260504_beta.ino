@@ -93,11 +93,6 @@ void setup() {
   pinMode(LAMPOUT_PIN, OUTPUT);
   digitalWrite(LAMPOUT_PIN, HIGH);
 
-  // PID amplifier gain select -- driven from the saved range setting after
-  // EEPROM is loaded (see end of setup()). Default LOW until then.
-  pinMode(PID_GAIN_PIN, OUTPUT);
-  digitalWrite(PID_GAIN_PIN, LOW);
-
   // High-voltage status feedback (input-only pin, GPIO 36 / SENSOR_VP).
   pinMode(HVON_STATUS_PIN, INPUT);
 
@@ -430,10 +425,6 @@ void setup() {
   int range = EEPROM.read(72);
   if (range > 1) range = 0;                  // valid: 0 (5000 ppm) or 1 (10000 ppm)
   g_range.selectRangeByIndex(range);
-  // Tie the analog gain stage to the saved range. Index 0 = 5000 ppm range
-  // (higher gain), index 1 = 10000 ppm range (lower gain). Polarity may need
-  // to be flipped if the hardware reads opposite -- verify on the bench.
-  digitalWrite(PID_GAIN_PIN, range == 0 ? HIGH : LOW);
 
   int gasindex = EEPROM.read(4);
   if (gasindex >= g_gasManager.getGasCount()) gasindex = 0;  // blank EEPROM → 255

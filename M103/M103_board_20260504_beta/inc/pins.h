@@ -10,7 +10,8 @@
 //   ALARM      -> IO 15   (digital out, alarm relay/buzzer drive)
 //   VBATT      -> IO 34   (ADC, via 100K/100K divider)
 //   LAMPOUT    -> IO 16   (digital out, PID UV lamp enable, active-high)
-//   PID_GAIN   -> IO 17   (digital out, amplifier gain select)
+//   PID_GAIN   -> IO 17   (schematic net only — gain select unused; firmware
+//                          does not drive it, range is display/over-range only)
 //   HVON/OFF   -> IO 36   (SENSOR_VP, INPUT ONLY — HV status read)
 //
 // I2C bus (RTC PCF8563, ADS1115, INA219, SHT4x)
@@ -27,7 +28,7 @@
 #define ALARM_PIN         15
 #define VBATT_ADC_PIN     34
 #define LAMPOUT_PIN       16
-#define PID_GAIN_PIN      17
+#define PID_GAIN_PIN      17   // reserved, not driven by firmware
 #define HVON_STATUS_PIN   36
 
 #define BUTTON_SINGLE_CLICK_HOLD_DURATION 250

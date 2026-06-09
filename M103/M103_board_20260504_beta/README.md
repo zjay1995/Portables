@@ -21,7 +21,7 @@ The M103 is a portable single-gas PID (Photoionization Detector) analyzer for VO
 | Power Switch | IO 12 | INPUT_PULLUP / EXT0 | Deep-sleep wake |
 | ALARM | IO 15 | OUTPUT | Relay / buzzer, idle low |
 | LAMPOUT | IO 16 | OUTPUT | UV lamp enable, active-high |
-| PID_GAIN | IO 17 | OUTPUT | Amplifier gain select |
+| PID_GAIN | IO 17 | — | Reserved (gain select unused; firmware does not drive it) |
 | HVON_STATUS | IO 36 (SENSOR_VP) | INPUT only | HV stage feedback |
 | VBATT_ADC | IO 34 | ADC input | 100K/100K divider from VBATT |
 | POWER HOLD | IO 25 | OUTPUT | Keep power on, active-high |
