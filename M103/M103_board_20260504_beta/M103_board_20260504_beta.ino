@@ -41,6 +41,7 @@ GasManager g_gasManager(-2.054456771, 1, 0, 0, 0, 0, 0, 0, 0, 0);
 BluetoothSerial BT;
 CompositeMenu* g_mainMenu = nullptr;
 TFTRunMenuRenderer* g_runRenderer = nullptr;  // for invalidate() after fillScreen
+DataSource* g_dataSource = nullptr;           // for alarm evaluation in loop()
 
 Adafruit_ADS1115 ads1115;
 Adafruit_INA219 ina219;
@@ -92,11 +93,6 @@ void setup() {
   pinMode(LAMPOUT_PIN, OUTPUT);
   digitalWrite(LAMPOUT_PIN, HIGH);
 
-  // PID amplifier gain select -- driven from the saved range setting after
-  // EEPROM is loaded (see end of setup()). Default LOW until then.
-  pinMode(PID_GAIN_PIN, OUTPUT);
-  digitalWrite(PID_GAIN_PIN, LOW);
-
   // High-voltage status feedback (input-only pin, GPIO 36 / SENSOR_VP).
   pinMode(HVON_STATUS_PIN, INPUT);
 
@@ -105,22 +101,32 @@ void setup() {
 
   // Initialize I2C-bus sensors and capture pass/fail for system check display.
   // ADS1115: begin() returns void — probe address 0x48 directly via I2C.
+  // Re-assert Wire.begin(23, 22) after every sensor lib begin(): the old
+  // Adafruit begin() calls Wire.begin() with no args, which can reset the bus
+  // to the default 21/22 pins and make every following probe fail.
   ads1115.begin();
-  ads1115.setGain(GAIN_TWOTHIRDS);
+  // GAIN_ONE = ±4.096 V full scale, 0.125 mV/bit — matches the 0.125F
+  // multiplier in AnalogSourceInput.h. The previous GAIN_TWOTHIRDS setting
+  // (0.1875 mV/bit) made every displayed/captured mV value read 33% low.
+  ads1115.setGain(GAIN_ONE);
+  Wire.begin(23, 22);
   Wire.beginTransmission(0x48);
   bool sc_ads = (Wire.endTransmission() == 0);
 
   bool sc_ina = ina219.begin();
   if (!sc_ina) Serial.println("INA219 not found -- falling back to ADC on IO 34 for battery");
+  Wire.begin(23, 22);
 
   // Battery voltage fallback via IO 34 resistor divider.
   analogSetPinAttenuation(VBATT_ADC_PIN, ADC_11db);
 
   bool sc_sht = sht4x.begin();
   if (!sc_sht) Serial.println("Couldn't find SHT4x");
+  Wire.begin(23, 22);
 
   AnalogSourceInput* ads1115AnalogSourceInput = new ADS1115AnalogSourceInput(&ads1115, &ina219, &sht4x);
   DataSource* dataSource = new DataSource(&g_gasManager, ads1115AnalogSourceInput);
+  g_dataSource = dataSource;
 
   g_gasManager.setConfigurationManager(&g_configurationManager);
   g_gasManager.addGas(Gas("100", 1.0));
@@ -281,11 +287,11 @@ void setup() {
   CompositeMenu* libraryMenu = new CompositeMenu("LIBRARY", "Main Menu" , gasMenus);
 
   vector<Menu*> sleepTimerMenus;
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("5", "TIMER",  0, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("60", "TIMER", 1, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("120", "TIMER", 2, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("360", "TIMER", 3, &g_sleepTimer, sleepTimerMenuRenderer));
-  sleepTimerMenus.push_back(new SleepTimerMenuItem("CONTINUOUS", "TIMER", 4, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("5 min", "TIMER",  0, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("1 hour", "TIMER", 1, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("2 hour", "TIMER", 2, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("6 hour", "TIMER", 3, &g_sleepTimer, sleepTimerMenuRenderer));
+  sleepTimerMenus.push_back(new SleepTimerMenuItem("Continuous", "TIMER", 4, &g_sleepTimer, sleepTimerMenuRenderer));
   CompositeMenu* timerMenu = new CompositeMenu("TIMER", "Main Menu" , sleepTimerMenus);
 
   vector<Menu*> rangeMenus;
@@ -378,8 +384,8 @@ void setup() {
   CompositeMenu* calresMenu = new CompositeMenu("Cal Result", "Main Menu", calresMenus);
 
   // --- FINAL MENU STRUCTURE ---
-  // Indices 0-9: normal scrollable settings (DOWN cycles through these).
-  // Indices 10-13: calibration sequence, only reachable via RIGHT from run screen.
+  // Indices 0-10: normal scrollable settings (DOWN cycles through these).
+  // Indices 11-14: calibration sequence, only reachable via RIGHT from run screen.
   vector<Menu*> horizontalMenus;
   horizontalMenus.push_back(runMenu);        // 0
   horizontalMenus.push_back(libraryMenu);    // 1
@@ -390,16 +396,17 @@ void setup() {
   horizontalMenus.push_back(hourMenu);       // 6
   horizontalMenus.push_back(minuteMenu);     // 7
   horizontalMenus.push_back(unitMenu);       // 8  Display unit (ppm / ppb / 1117)
-  horizontalMenus.push_back(calInfoMenu);    // 9  Cal factors & date (view only)
-  horizontalMenus.push_back(calMenu);        // 10 Cal Step 1: Zero
-  horizontalMenus.push_back(calvalueMenu);   // 11 Cal Step 2: set span gas value
-  horizontalMenus.push_back(calgasMenu);     // 12 Cal Step 3: capture span
-  horizontalMenus.push_back(calresMenu);     // 13 Cal result
+  horizontalMenus.push_back(timerMenu);      // 9  Auto power-off idle time
+  horizontalMenus.push_back(calInfoMenu);    // 10 Cal factors & date (view only)
+  horizontalMenus.push_back(calMenu);        // 11 Cal Step 1: Zero
+  horizontalMenus.push_back(calvalueMenu);   // 12 Cal Step 2: set span gas value
+  horizontalMenus.push_back(calgasMenu);     // 13 Cal Step 3: capture span
+  horizontalMenus.push_back(calresMenu);     // 14 Cal result
 
   Serial.println("horizontal menu " + String(horizontalMenus.size()));
   CompositeMenu* verticalMenu = new CompositeMenu("Main Menu", "", horizontalMenus);
   g_mainMenu = verticalMenu;
-  g_mainMenu->setNavLimit(10);  // DOWN only cycles indices 0-9; cal zone (10-13) is right-button only
+  g_mainMenu->setNavLimit(11);  // DOWN only cycles indices 0-10; cal zone (11-14) is right-button only
   g_mainMenu->print();
 
   setupButtons();
@@ -418,10 +425,6 @@ void setup() {
   int range = EEPROM.read(72);
   if (range > 1) range = 0;                  // valid: 0 (5000 ppm) or 1 (10000 ppm)
   g_range.selectRangeByIndex(range);
-  // Tie the analog gain stage to the saved range. Index 0 = 5000 ppm range
-  // (higher gain), index 1 = 10000 ppm range (lower gain). Polarity may need
-  // to be flipped if the hardware reads opposite -- verify on the bench.
-  digitalWrite(PID_GAIN_PIN, range == 0 ? HIGH : LOW);
 
   int gasindex = EEPROM.read(4);
   if (gasindex >= g_gasManager.getGasCount()) gasindex = 0;  // blank EEPROM → 255
@@ -442,6 +445,26 @@ void setup() {
   int unit = EEPROM.read(100);
   if (unit > 2) unit = 0;                    // 0=ppm, 1=ppb, 2=1117 lamp
   g_unitset.selectUnitByIndex(unit);
+
+  int calvalue = EEPROM.read(80);
+  if (calvalue >= 14) calvalue = 0;          // 14 entries in cal gas table
+  g_calvalue.selectCalvalueByIndex(calvalue);
+
+  int loggingtime = EEPROM.read(200);
+  if (loggingtime > 4) loggingtime = 0;      // 1s/10s/1m/10m/1h
+  g_loggingtime.selectLoggingtimeByIndex(loggingtime);
+
+  // Manual log counter (ushort @ 210): blank EEPROM reads 0xFFFF.
+  if (EEPROM.readUShort(210) == 0xFFFF) {
+    EEPROM.writeUShort(210, 0);
+    EEPROM.commit();
+  }
+
+  int sleepIdx = EEPROM.read(0);
+  if (sleepIdx > 4) sleepIdx = 2;            // factory default: 2 hour auto-off
+  g_sleepTimer.selectIntervalByIndex(sleepIdx);
+
+  g_dataLogger.setLoggingConfig(&g_loggingset, &g_loggingtime);
 }
 
 static void showSavedBanner(const char* msg) {
@@ -458,13 +481,13 @@ static void showSavedBanner(const char* msg) {
 void setupButtons() {
   Keyboard* keyboard = new Keyboard();
 
-  // DOWN: advance through regular settings (0-9). In cal zone, escape back to run.
+  // DOWN: advance through regular settings (0-10). In cal zone, escape back to run.
   keyboard->addOnDownPressedFctor([] {
     g_sleepTimer.resetIdleCounter();
     tft.fillScreen(TFT_BLACK);
     if (g_runRenderer) g_runRenderer->invalidate();
     int idx = g_mainMenu->getCurrentIndex();
-    if (idx >= 10) {
+    if (idx >= 11) {
       g_mainMenu->setCurrentMenu(0);  // escape cal sequence
     } else {
       g_mainMenu->moveToNext();
@@ -478,20 +501,20 @@ void setupButtons() {
     g_mainMenu->action();
     g_timeSync.initTimeFromRTC();
 
-    if (idx == 0 || idx == 9) {
+    if (idx == 0 || idx == 10) {
       // Run screen: S triggers logging only. CalInfo: view-only, no banner.
       tft.fillScreen(TFT_BLACK);
       if (g_runRenderer) g_runRenderer->invalidate();
-      if (idx == 9) g_mainMenu->moveToNext();  // calInfo → back to run
+      if (idx == 10) g_mainMenu->moveToNext();  // calInfo → back to run
       return;
     }
 
-    showSavedBanner(idx == 12 ? "CAL COMPLETE" : idx == 13 ? "CAL FINISHED" : "VALUE SAVED");
+    showSavedBanner(idx == 13 ? "CAL COMPLETE" : idx == 14 ? "CAL FINISHED" : "VALUE SAVED");
     if (g_runRenderer) g_runRenderer->invalidate();
 
-    if (idx >= 10 && idx < 13) {
+    if (idx >= 11 && idx < 14) {
       g_mainMenu->setCurrentMenu(idx + 1);  // next cal step
-    } else if (idx == 13) {
+    } else if (idx == 14) {
       g_mainMenu->setCurrentMenu(0);        // cal done → back to run
     } else {
       g_mainMenu->moveToNext();             // next regular setting (wraps to run)
@@ -504,7 +527,7 @@ void setupButtons() {
     tft.fillScreen(TFT_BLACK);
     if (g_runRenderer) g_runRenderer->invalidate();
     if (g_mainMenu->getCurrentIndex() == 0) {
-      g_mainMenu->setCurrentMenu(10);  // jump straight to cal Zero (calInfo is menu-only)
+      g_mainMenu->setCurrentMenu(11);  // jump straight to cal Zero (calInfo is menu-only)
     } else {
       ((CompositeMenu*)g_mainMenu->getCurrentMenu())->moveToNext();
     }
@@ -581,13 +604,28 @@ void clearLogFile() {
   }
   logFile.print("");
   logFile.close();
+  EEPROM.writeUShort(210, 0);  // reset manual log counter shown on run screen
+  EEPROM.commit();
   Serial.println("log.txt has been cleared");
+}
+
+// Drive the alarm relay/buzzer (IO 15, active-high) from the live reading and
+// the saved setpoints. Runs every loop so the alarm tracks the gas level even
+// when the operator is on a settings screen, and clears when the level drops.
+static void handleAlarmOutput() {
+  if (!g_dataSource) return;
+  double ppm   = g_dataSource->getDoubleValue();
+  int highSet  = g_alarm.getSelectedAlarm();
+  int lowSet   = g_lowalarm.getSelectedLowalarm();
+  bool active  = (highSet != 0 && ppm > highSet) || (lowSet != 0 && ppm > lowSet);
+  digitalWrite(ALARM_PIN, active ? HIGH : LOW);
 }
 
 void loop() {
   ButtonPressDetector::handleTick();
   g_sleepTimer.handleTick();
   g_dataLogger.handleTick();
+  handleAlarmOutput();
   g_mainMenu->render();
   listenForCode();
   delay(10);

@@ -50,7 +50,7 @@ All menus, button logic, splash screen, system check, and screen layouts are **i
 | Power Switch | IO 12 | INPUT_PULLUP / EXT0 | Deep-sleep wake |
 | ALARM | IO 15 | OUTPUT | Relay / buzzer, idle low |
 | LAMPOUT | IO 16 | OUTPUT | UV lamp enable, active-high |
-| PID_GAIN | IO 17 | OUTPUT | Amplifier gain select |
+| PID_GAIN | IO 17 | — | Reserved (gain select unused; firmware does not drive it) |
 | HVON_STATUS | IO 36 (SENSOR_VP) | INPUT only | HV stage feedback |
 | POWER HOLD | IO 25 | OUTPUT | Keep power on, active-high |
 | I2C SDA | IO 23 | Bidirectional | Same as HUZZAH32 default |
@@ -76,7 +76,7 @@ All five items are hardcoded to **[ OK ]** in the demo build. The screen shows "
 | Power Switch | IO 12 | INPUT_PULLUP / EXT0 | Deep-sleep wake |
 | ALARM | IO 15 | OUTPUT | Relay / buzzer, idle low |
 | LAMPOUT | IO 16 | OUTPUT | UV lamp enable, active-high |
-| PID_GAIN | IO 17 | OUTPUT | Amplifier gain select |
+| PID_GAIN | IO 17 | — | Reserved (gain select unused; firmware does not drive it) |
 | HVON_STATUS | IO 36 (SENSOR_VP) | INPUT only | HV stage feedback |
 | VBATT_ADC | IO 34 | ADC input | 100K/100K divider from VBATT |
 | POWER HOLD | IO 25 | OUTPUT | Keep power on, active-high |

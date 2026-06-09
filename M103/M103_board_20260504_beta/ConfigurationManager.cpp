@@ -42,97 +42,83 @@ void ConfigurationManager::loadFromEEPROM()
     notifyParamChanged(c_GASINDEX_PARAM_NAME, String(gasIndex));
 
 
+    // Helper: EEPROM bytes 0xFF on a blank board produce a signaling NaN when
+    // read as a double. Passing NaN to String()/dtostrf() overflows the small
+    // internal char buffer and smashes the stack. Sanitise every double read
+    // back to the -1 sentinel before using it.
+    #define SAFE_EEPROM_DOUBLE(addr) \
+        ([&]() -> double { double _v = EEPROM.readDouble(addr); return isnan(_v) ? -1.0 : _v; }())
+
+    // NOTE: cal factors are forwarded with 9 decimal places. The default
+    // String(double) keeps only 2, which truncated small slopes (e.g.
+    // 0.004061 -> "0.00" -> 0.0) and zeroed the calibration on every boot.
 	// INTERCEPT
-	double intercept = -1;
-	intercept = EEPROM.readDouble(EEPROM_GAS_INTERCEPT_OFFSET);		
+	double intercept = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT_OFFSET);
 	if(intercept != -1)
-		notifyParamChanged(c_INTERCEPT_PARAM_NAME, String(intercept));
-	Serial.println("config: intercept: " + String(intercept));
+		notifyParamChanged(c_INTERCEPT_PARAM_NAME, String(intercept, 9));
+	Serial.println("config: intercept: " + String(intercept, 9));
 
-    double intercept2 = -1;
-    intercept2 = EEPROM.readDouble(EEPROM_GAS_INTERCEPT2_OFFSET);
+    double intercept2 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT2_OFFSET);
     if(intercept2 != -1)
-        notifyParamChanged(c_INTERCEPT2_PARAM_NAME, String(intercept2));
-    Serial.println("config: intercept2: " + String(intercept2));
+        notifyParamChanged(c_INTERCEPT2_PARAM_NAME, String(intercept2, 9));
+    Serial.println("config: intercept2: " + String(intercept2, 9));
 
-    double intercept3 = -1;
-    intercept3 = EEPROM.readDouble(EEPROM_GAS_INTERCEPT3_OFFSET);
+    double intercept3 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT3_OFFSET);
     if(intercept3 != -1)
-        notifyParamChanged(c_INTERCEPT3_PARAM_NAME, String(intercept3));
-    Serial.println("config: intercept3: " + String(intercept3));
+        notifyParamChanged(c_INTERCEPT3_PARAM_NAME, String(intercept3, 9));
+    Serial.println("config: intercept3: " + String(intercept3, 9));
 
-    double intercept4 = -1;
-    intercept4 = EEPROM.readDouble(EEPROM_GAS_INTERCEPT4_OFFSET);
+    double intercept4 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT4_OFFSET);
     if(intercept4 != -1)
-        notifyParamChanged(c_INTERCEPT4_PARAM_NAME, String(intercept4));
-    Serial.println("config: intercept4: " + String(intercept4));
+        notifyParamChanged(c_INTERCEPT4_PARAM_NAME, String(intercept4, 9));
+    Serial.println("config: intercept4: " + String(intercept4, 9));
 
-	//Slope
-    double slope = -1;
-    slope = EEPROM.readDouble(EEPROM_GAS_SLOPE_OFFSET);
+	// Slope
+    double slope = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE_OFFSET);
     if(slope != -1)
-        notifyParamChanged(c_SLOPE_PARAM_NAME, String(slope));
-    Serial.println("config: slope: " + String(slope));
+        notifyParamChanged(c_SLOPE_PARAM_NAME, String(slope, 9));
+    Serial.println("config: slope: " + String(slope, 9));
 
-
-    //slope2
-    double slope2 = -1;
-    slope2 = EEPROM.readDouble(EEPROM_GAS_SLOPE2_OFFSET);
+    double slope2 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE2_OFFSET);
     if(slope2 != -1)
-        notifyParamChanged(c_SLOPE2_PARAM_NAME, String(slope2));
-    Serial.println("config: slope2: " + String(slope2));
+        notifyParamChanged(c_SLOPE2_PARAM_NAME, String(slope2, 9));
+    Serial.println("config: slope2: " + String(slope2, 9));
 
-    double slope3 = -1;
-    slope3 = EEPROM.readDouble(EEPROM_GAS_SLOPE3_OFFSET);
+    double slope3 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE3_OFFSET);
     if(slope3 != -1)
-        notifyParamChanged(c_SLOPE3_PARAM_NAME, String(slope3));
-    Serial.println("config: slope3: " + String(slope3));
+        notifyParamChanged(c_SLOPE3_PARAM_NAME, String(slope3, 9));
+    Serial.println("config: slope3: " + String(slope3, 9));
 
-    double slope4 = -1;
-    slope4 = EEPROM.readDouble(EEPROM_GAS_SLOPE4_OFFSET);
+    double slope4 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE4_OFFSET);
     if(slope4 != -1)
-        notifyParamChanged(c_SLOPE4_PARAM_NAME, String(slope4));
-    Serial.println("config: slope4: " + String(slope4));
+        notifyParamChanged(c_SLOPE4_PARAM_NAME, String(slope4, 9));
+    Serial.println("config: slope4: " + String(slope4, 9));
 
-	/*
-		Gas TCs
-	*/
+    // Gas TCs — offsets are all 999 (disabled/out-of-bounds); reads safely
+    // return -1 via SAFE_EEPROM_DOUBLE so no notify is sent and no crash occurs.
+    double AirTC   = SAFE_EEPROM_DOUBLE(EEPROM_GAS_AIR_TC_OFFSET);
+    if(AirTC   != -1) notifyParamChanged(c_GAS_AIR_PARAM_NAME,   String(AirTC));
+    Serial.println("config: Air TC: "   + String(AirTC));
 
-	double AirTC = -1;
-	AirTC =	EEPROM.readDouble(EEPROM_GAS_AIR_TC_OFFSET);
-	if(AirTC != -1)
-		notifyParamChanged(c_GAS_AIR_PARAM_NAME, String(AirTC));
-	Serial.println("config: Air TC: " + String(AirTC));
-	
-	double O2TC = -1;
-	O2TC = EEPROM.readDouble(EEPROM_GAS_O2_TC_OFFSET);
-	if(O2TC != -1)
-		notifyParamChanged(c_GAS_O2_PARAM_NAME, String(O2TC));
-	Serial.println("config: O2 TC: " + String(O2TC));		
-	
-	double N2TC = -1;
-	N2TC = EEPROM.readDouble(EEPROM_GAS_N2_TC_OFFSET);	
-	if(N2TC != -1)
-		notifyParamChanged(c_GAS_N2_PARAM_NAME, String(N2TC));
-	Serial.println("config: N2 TC: " + String(N2TC));
-	
-	double HeTC = -1;
-	HeTC = EEPROM.readDouble(EEPROM_GAS_He_TC_OFFSET);
-	if(HeTC != -1)
-		notifyParamChanged(c_GAS_He_PARAM_NAME, String(HeTC));
-	Serial.println("config: He TC: " + String(HeTC));
-	
-	double H2TC = -1;
-	H2TC = EEPROM.readDouble(EEPROM_GAS_H2_TC_OFFSET);		
-	if(H2TC != -1)
-		notifyParamChanged(c_GAS_H2_PARAM_NAME, String(H2TC));
-	Serial.println("config: H2 TC: " + String(H2TC));
-	
-	double ArCH4TC = -1;
-	ArCH4TC = EEPROM.readDouble(EEPROM_GAS_ArCH4_TC_OFFSET);		
-	if(ArCH4TC != -1)
-		notifyParamChanged(c_GAS_ARCH4_PARAM_NAME, String(ArCH4TC));
-	Serial.println("config: ArCH4 TC: " + String(ArCH4TC));
+    double O2TC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_O2_TC_OFFSET);
+    if(O2TC    != -1) notifyParamChanged(c_GAS_O2_PARAM_NAME,    String(O2TC));
+    Serial.println("config: O2 TC: "    + String(O2TC));
+
+    double N2TC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_N2_TC_OFFSET);
+    if(N2TC    != -1) notifyParamChanged(c_GAS_N2_PARAM_NAME,    String(N2TC));
+    Serial.println("config: N2 TC: "    + String(N2TC));
+
+    double HeTC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_He_TC_OFFSET);
+    if(HeTC    != -1) notifyParamChanged(c_GAS_He_PARAM_NAME,    String(HeTC));
+    Serial.println("config: He TC: "    + String(HeTC));
+
+    double H2TC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_H2_TC_OFFSET);
+    if(H2TC    != -1) notifyParamChanged(c_GAS_H2_PARAM_NAME,    String(H2TC));
+    Serial.println("config: H2 TC: "    + String(H2TC));
+
+    double ArCH4TC = SAFE_EEPROM_DOUBLE(EEPROM_GAS_ArCH4_TC_OFFSET);
+    if(ArCH4TC != -1) notifyParamChanged(c_GAS_ARCH4_PARAM_NAME, String(ArCH4TC));
+    Serial.println("config: ArCH4 TC: " + String(ArCH4TC));
 	
 	///////////////
 

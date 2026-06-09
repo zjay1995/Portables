@@ -92,6 +92,7 @@ public:
 
     int getSelectedLoggingset() {
         int loggingset = EEPROM.read(96);
+        if (loggingset < 0 || loggingset >= (int)m_loggingsetArray.size()) loggingset = 0;  // blank EEPROM → 255
         return m_loggingsetArray[loggingset];
     }
 

@@ -21,7 +21,7 @@ The M103 is a portable single-gas PID (Photoionization Detector) analyzer for VO
 | Power Switch | IO 12 | INPUT_PULLUP / EXT0 | Deep-sleep wake |
 | ALARM | IO 15 | OUTPUT | Relay / buzzer, idle low |
 | LAMPOUT | IO 16 | OUTPUT | UV lamp enable, active-high |
-| PID_GAIN | IO 17 | OUTPUT | Amplifier gain select |
+| PID_GAIN | IO 17 | — | Reserved (gain select unused; firmware does not drive it) |
 | HVON_STATUS | IO 36 (SENSOR_VP) | INPUT only | HV stage feedback |
 | VBATT_ADC | IO 34 | ADC input | 100K/100K divider from VBATT |
 | POWER HOLD | IO 25 | OUTPUT | Keep power on, active-high |
@@ -79,7 +79,7 @@ The M103 is a portable single-gas PID (Photoionization Detector) analyzer for VO
 
 | Address | Bytes | Content |
 |---|---|---|
-| 0 | 4 | Timer interval |
+| 0 | 4 | Auto power-off index (0=5m, 1=1h, 2=2h, 3=6h, 4=continuous) |
 | 4 | 4 | Gas index |
 | 8 | 8 | Gas 1 intercept (double) |
 | 16 | 8 | Gas 1 slope (double) |
@@ -98,9 +98,12 @@ The M103 is a portable single-gas PID (Photoionization Detector) analyzer for VO
 | 100 | 1 | Display unit (0=ppm, 1=ppb, 2=1117) |
 | 120 | ~20 | Cal timestamp string "YYYY-MM-DD HH:MM" |
 | 200 | 4 | Logging interval index |
+| 210 | 2 | Manual log entry counter (ushort) |
 | 220 | 4 | Hour setting |
 | 230 | 4 | Minute setting |
 | 240 | 5 | Time backup: yr−2000, month, day, hour, minute |
+
+`EEPROM_SIZE` is 512 bytes (`inc/ConfigurationManager.h`) — it must stay larger than the highest address above, or writes beyond it are silently dropped.
 
 ---
 
@@ -118,33 +121,34 @@ Idx  Screen            Button Access       Notes
  6   Set Hour          DOWN
  7   Set Minute        DOWN
  8   Display Unit      DOWN                ppm / ppb / 1117
- 9   Cal Info          DOWN                View only: factors + date
-── navLimit = 10 : DOWN wraps 9 → 0 ────────────────────
-10   Cal Zero          RIGHT from run      Step 1/2
-11   Cal Gas Value     auto-advance        Set span ppm
-12   Cal Span          auto-advance        Step 2/2
-13   Cal Result        auto-advance        Pass / Fail → run
+ 9   Auto Power-Off    DOWN                5m / 1h / 2h / 6h / continuous
+10   Cal Info          DOWN                View only: factors + date
+── navLimit = 11 : DOWN wraps 10 → 0 ───────────────────
+11   Cal Zero          RIGHT from run      Step 1/2
+12   Cal Gas Value     auto-advance        Set span ppm
+13   Cal Span          auto-advance        Step 2/2
+14   Cal Result        auto-advance        Pass / Fail → run
 ```
 
 ---
 
 ## 6. Button Behaviour
 
-| Button | Run (0) | Settings (1–9) | Cal zone (10–13) |
+| Button | Run (0) | Settings (1–10) | Cal zone (11–14) |
 |---|---|---|---|
-| **DOWN** | No action | Advance; wraps 9→0 | Abort → run (0) |
+| **DOWN** | No action | Advance; wraps 10→0 | Abort → run (0) |
 | **S** | Log trigger only | Save + banner + advance | Save + cal banner + advance |
-| **RIGHT** | Enter cal → screen 10 | Cycle value in submenu | Cycle value in submenu |
+| **RIGHT** | Enter cal → screen 11 | Cycle value in submenu | Cycle value in submenu |
 
 **S-button banners:**
 
 | Screen | Banner |
 |---|---|
 | 0 (run) | *(none)* |
-| 9 (cal info) | *(none — view only)* |
-| 1–8, 10–11 (settings / cal steps) | `VALUE SAVED` |
-| 12 (span capture) | `CAL COMPLETE` |
-| 13 (cal result) | `CAL FINISHED` |
+| 10 (cal info) | *(none — view only)* |
+| 1–9, 11–12 (settings / cal steps) | `VALUE SAVED` |
+| 13 (span capture) | `CAL COMPLETE` |
+| 14 (cal result) | `CAL FINISHED` |
 
 **Standard footer (all settings screens):** `MENU  |  SET  |  OPTIONS`
 **Cal gas value footer:** `ABORT  |  SET  |  OPTIONS`
@@ -185,7 +189,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Info Screen (idx 9)
+### Cal Info Screen (idx 10)
 ```
 ┌──────────────────────┐
 │     CAL FACTORS      │
@@ -204,7 +208,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Zero (idx 10)
+### Cal Zero (idx 11)
 ```
 ┌──────────────────────┐
 │  STEP 1/2 — ZERO     │
@@ -220,7 +224,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Gas Value (idx 11)
+### Cal Gas Value (idx 12)
 ```
 ┌──────────────────────┐
 │    Cal Gas Value     │
@@ -233,7 +237,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Span (idx 12)
+### Cal Span (idx 13)
 ```
 ┌──────────────────────┐
 │  STEP 2/2 — SPAN     │
@@ -248,7 +252,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Result (idx 13)
+### Cal Result (idx 14)
 ```
 ┌──────────────────────┐
 │      Cal Result      │
@@ -286,19 +290,19 @@ Holds 4 s on fault, 2 s on pass.
 RIGHT from run screen
         │
         ▼
-  [10] Zero ──S──► VALUE SAVED ──► [11] Cal Gas Value
+  [11] Zero ──S──► VALUE SAVED ──► [12] Cal Gas Value
                                            │ S
                                            ▼
                                      VALUE SAVED
                                            │
                                            ▼
-                                   [12] Span Capture
+                                   [13] Span Capture
                                            │ S
                                            ▼
                                      CAL COMPLETE
                                            │
                                            ▼
-                                    [13] Cal Result
+                                    [14] Cal Result
                                            │ S
                                            ▼
                                       CAL FINISHED

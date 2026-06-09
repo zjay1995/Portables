@@ -102,6 +102,7 @@ public:
 
     int getSelectedAlarm() {
         int alarm = EEPROM.read(76);
+        if (alarm < 0 || alarm >= (int)m_alarmArray.size()) alarm = 0;  // blank EEPROM → 255
         return m_alarmArray[alarm];
     }
 

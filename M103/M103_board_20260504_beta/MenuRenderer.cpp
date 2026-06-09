@@ -303,9 +303,10 @@ void drawStandardFooter(TFT_eSPI* tft) {
 
 void TFTSleepTimerMenuRenderer::render(Menu* menu) {
   m_display->setTextColor(TFT_WHITE, TFT_BLACK);
-  drawCenteredString(m_display, "TIMER SLEEP", 5, 4);
+  drawCenteredString(m_display, "Auto Power-Off", 5, 4);
   m_display->drawLine(0, 35, m_display->width(), 35, TFT_WHITE);
   drawCenteredString(m_display, menu->getName(), m_display->height() / 2 - 26, 4, 2);
+  drawStandardFooter(m_display);
 }
 
 void TFTRangeMenuRenderer::render(Menu* menu) {
@@ -411,18 +412,36 @@ void TFTCalStartMenuRenderer::render(Menu* menu) {
 }
 
 // Track sample-to-sample drift to flag stability for the operator.
-static bool isStableMv(uint16_t mv) {
-  static uint16_t history[8] = {0};
-  static int idx = 0;
-  static bool primed = false;
-  history[idx] = mv;
-  idx = (idx + 1) % 8;
-  if (idx == 0) primed = true;
-  if (!primed) return false;
-  uint16_t lo = history[0], hi = history[0];
+// chan: 0 = Zero screen, 1 = Span screen — separate histories so leftover
+// zero-gas samples can't mark the span reading stable (and vice versa).
+// Samples are taken every 500 ms to match the ADS1115 cache refresh (2 Hz);
+// sampling every render frame just re-read the same cached value 8 times
+// and reported STABLE immediately. 8 samples = a 4 s observation window.
+// If the screen hasn't rendered for >2 s (operator left and came back),
+// the history restarts.
+static bool isStableMv(uint16_t mv, int chan) {
+  static uint16_t history[2][8];
+  static int idx[2] = {0, 0};
+  static bool primed[2] = {false, false};
+  static unsigned long lastSample[2] = {0, 0};
+
+  unsigned long now = millis();
+  if (lastSample[chan] != 0 && now - lastSample[chan] > 2000) {
+    idx[chan] = 0;
+    primed[chan] = false;
+  }
+  if (lastSample[chan] == 0 || now - lastSample[chan] >= 500) {
+    lastSample[chan] = now;
+    history[chan][idx[chan]] = mv;
+    idx[chan] = (idx[chan] + 1) % 8;
+    if (idx[chan] == 0) primed[chan] = true;
+  }
+  if (!primed[chan]) return false;
+
+  uint16_t lo = history[chan][0], hi = history[chan][0];
   for (int i = 1; i < 8; i++) {
-    if (history[i] < lo) lo = history[i];
-    if (history[i] > hi) hi = history[i];
+    if (history[chan][i] < lo) lo = history[chan][i];
+    if (history[chan][i] > hi) hi = history[chan][i];
   }
   return (hi - lo) <= 2; // within 2 mV peak-to-peak
 }
@@ -439,7 +458,7 @@ void TFTZEROMenuRenderer::render(Menu* menu) {
   m_display->setTextColor(READING_COLOR, TFT_BLACK);
   drawCenteredString(m_display, String(mv) + " mV", m_display->height() / 2 - 50, 4, 3);
 
-  bool stable = isStableMv(mv);
+  bool stable = isStableMv(mv, 0);
   m_display->setTextColor(stable ? OK_COLOR : READING_COLOR, TFT_BLACK);
   drawCenteredString(m_display, stable ? "[ STABLE ]" : "[ STABILIZING... ]", m_display->height() / 2 + 60, 4);
 
@@ -462,7 +481,7 @@ void TFTCalGasMenuRenderer::render(Menu* menu) {
   m_display->setTextColor(READING_COLOR, TFT_BLACK);
   drawCenteredString(m_display, String(mv) + " mV", m_display->height() / 2 + 30, 4, 3);
 
-  bool stable = isStableMv(mv);
+  bool stable = isStableMv(mv, 1);
   m_display->setTextColor(stable ? OK_COLOR : READING_COLOR, TFT_BLACK);
   drawCenteredString(m_display, stable ? "[ STABLE ]" : "[ STABILIZING... ]", m_display->height() - 80, 4);
 
