@@ -54,7 +54,7 @@ class GasManager : public ParamChangeListener
     double m_zero;
     double m_calgas;
 
-    bool calSuccess;  // Store calibration success status
+    bool calSuccess = false;  // Store calibration success status
 
     ConfigurationManager* m_configurationManager;
 
@@ -161,7 +161,7 @@ public:
         {
             m_selectedGas = index;
             //m_configurationManager->saveGasSelectedToEEPROM(index);
-            Serial.println("gas index saved"+index);
+            Serial.println("gas index saved " + String(index));
             EEPROM.writeInt(4, index);
             EEPROM.commit();
         }

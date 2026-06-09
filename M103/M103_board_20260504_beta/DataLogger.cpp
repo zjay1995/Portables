@@ -1,6 +1,8 @@
 #include "inc/DataLogger.h"
 #include "inc/DataSource.h"
 #include "inc/GasManager.h"
+#include "inc/LoggingSet.h"
+#include "inc/LoggingTime.h"
 #include <EEPROM.h>
 
 portMUX_TYPE DataLogger::s_mtxLogger = portMUX_INITIALIZER_UNLOCKED;
@@ -47,15 +49,40 @@ bool DataLogger::isFlashStoreSessionRunning() const
   return m_sessionRunning;
 }
 
+void DataLogger::setLoggingConfig(Loggingset* loggingset, Loggingtime* loggingtime)
+{
+  m_loggingset = loggingset;
+  m_loggingtime = loggingtime;
+}
+
+// Append one CSV line ("timestamp,TAG,ppm") to /log.txt. The file is retrieved
+// over Bluetooth/Serial with the PID73* command (see listenForCode()).
+bool DataLogger::appendLogEntry(const char* tag)
+{
+  if (!m_dataSource) return false;
+  fs::File f = SPIFFS.open("/log.txt", FILE_APPEND);
+  if (!f) {
+    Serial.println("DataLogger: failed to open /log.txt for append");
+    return false;
+  }
+  f.printf("%s,%s,%.1f\n", getCurrentDateTimeStr().c_str(), tag,
+           m_dataSource->getDoubleValue());
+  f.close();
+  return true;
+}
+
 void DataLogger::handleTick()
 {
-  if(m_sessionRunning && shouldExecTick()) {
-        // Simple log logic
-        if(!m_file) {
-             // Open file logic if needed
-        }
-        // Write data...
-    }
+  // Auto mode: log at the configured interval while on any screen.
+  if (!m_loggingset || m_loggingset->getSelectedLoggingset() != 1) return;
+
+  static const int c_intervalSeconds[] = { 1, 10, 60, 600, 3600 };
+  int idx = m_loggingtime ? m_loggingtime->getSelectedLoggingtime() : 0;
+  if (idx < 0 || idx > 4) idx = 0;
+  m_secondsBetweenDataPoints = c_intervalSeconds[idx];
+
+  if (shouldExecTick())
+    appendLogEntry("AUTO");
 }
 
 bool DataLogger::shouldExecTick()

@@ -95,6 +95,7 @@ public:
 
     int getSelectedRange() {
         int range = EEPROM.read(72);
+        if (range < 0 || range >= (int)m_rangeArray.size()) range = 0;  // blank EEPROM → 255
         return m_rangeArray[range];
     }
 

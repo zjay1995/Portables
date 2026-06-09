@@ -41,6 +41,7 @@ GasManager g_gasManager(-2.054456771, 1, 0, 0, 0, 0, 0, 0, 0, 0);
 BluetoothSerial BT;
 CompositeMenu* g_mainMenu = nullptr;
 TFTRunMenuRenderer* g_runRenderer = nullptr;  // for invalidate() after fillScreen
+DataSource* g_dataSource = nullptr;           // for alarm evaluation in loop()
 
 Adafruit_ADS1115 ads1115;
 Adafruit_INA219 ina219;
@@ -105,22 +106,32 @@ void setup() {
 
   // Initialize I2C-bus sensors and capture pass/fail for system check display.
   // ADS1115: begin() returns void — probe address 0x48 directly via I2C.
+  // Re-assert Wire.begin(23, 22) after every sensor lib begin(): the old
+  // Adafruit begin() calls Wire.begin() with no args, which can reset the bus
+  // to the default 21/22 pins and make every following probe fail.
   ads1115.begin();
-  ads1115.setGain(GAIN_TWOTHIRDS);
+  // GAIN_ONE = ±4.096 V full scale, 0.125 mV/bit — matches the 0.125F
+  // multiplier in AnalogSourceInput.h. The previous GAIN_TWOTHIRDS setting
+  // (0.1875 mV/bit) made every displayed/captured mV value read 33% low.
+  ads1115.setGain(GAIN_ONE);
+  Wire.begin(23, 22);
   Wire.beginTransmission(0x48);
   bool sc_ads = (Wire.endTransmission() == 0);
 
   bool sc_ina = ina219.begin();
   if (!sc_ina) Serial.println("INA219 not found -- falling back to ADC on IO 34 for battery");
+  Wire.begin(23, 22);
 
   // Battery voltage fallback via IO 34 resistor divider.
   analogSetPinAttenuation(VBATT_ADC_PIN, ADC_11db);
 
   bool sc_sht = sht4x.begin();
   if (!sc_sht) Serial.println("Couldn't find SHT4x");
+  Wire.begin(23, 22);
 
   AnalogSourceInput* ads1115AnalogSourceInput = new ADS1115AnalogSourceInput(&ads1115, &ina219, &sht4x);
   DataSource* dataSource = new DataSource(&g_gasManager, ads1115AnalogSourceInput);
+  g_dataSource = dataSource;
 
   g_gasManager.setConfigurationManager(&g_configurationManager);
   g_gasManager.addGas(Gas("100", 1.0));
@@ -442,6 +453,22 @@ void setup() {
   int unit = EEPROM.read(100);
   if (unit > 2) unit = 0;                    // 0=ppm, 1=ppb, 2=1117 lamp
   g_unitset.selectUnitByIndex(unit);
+
+  int calvalue = EEPROM.read(80);
+  if (calvalue >= 14) calvalue = 0;          // 14 entries in cal gas table
+  g_calvalue.selectCalvalueByIndex(calvalue);
+
+  int loggingtime = EEPROM.read(200);
+  if (loggingtime > 4) loggingtime = 0;      // 1s/10s/1m/10m/1h
+  g_loggingtime.selectLoggingtimeByIndex(loggingtime);
+
+  // Manual log counter (ushort @ 210): blank EEPROM reads 0xFFFF.
+  if (EEPROM.readUShort(210) == 0xFFFF) {
+    EEPROM.writeUShort(210, 0);
+    EEPROM.commit();
+  }
+
+  g_dataLogger.setLoggingConfig(&g_loggingset, &g_loggingtime);
 }
 
 static void showSavedBanner(const char* msg) {
@@ -581,13 +608,28 @@ void clearLogFile() {
   }
   logFile.print("");
   logFile.close();
+  EEPROM.writeUShort(210, 0);  // reset manual log counter shown on run screen
+  EEPROM.commit();
   Serial.println("log.txt has been cleared");
+}
+
+// Drive the alarm relay/buzzer (IO 15, active-high) from the live reading and
+// the saved setpoints. Runs every loop so the alarm tracks the gas level even
+// when the operator is on a settings screen, and clears when the level drops.
+static void handleAlarmOutput() {
+  if (!g_dataSource) return;
+  double ppm   = g_dataSource->getDoubleValue();
+  int highSet  = g_alarm.getSelectedAlarm();
+  int lowSet   = g_lowalarm.getSelectedLowalarm();
+  bool active  = (highSet != 0 && ppm > highSet) || (lowSet != 0 && ppm > lowSet);
+  digitalWrite(ALARM_PIN, active ? HIGH : LOW);
 }
 
 void loop() {
   ButtonPressDetector::handleTick();
   g_sleepTimer.handleTick();
   g_dataLogger.handleTick();
+  handleAlarmOutput();
   g_mainMenu->render();
   listenForCode();
   delay(10);

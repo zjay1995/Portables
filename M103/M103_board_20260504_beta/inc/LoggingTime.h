@@ -92,6 +92,7 @@ public:
 
     int getSelectedLoggingtime() {
         int loggingtime = EEPROM.read(200);
+        if (loggingtime < 0 || loggingtime >= (int)m_loggingtimeArray.size()) loggingtime = 0;  // blank EEPROM → 255
         return m_loggingtimeArray[loggingtime];
     }
 

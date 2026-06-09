@@ -100,6 +100,7 @@ public:
 
     int getSelectedLowalarm() {
         int lowalarm = EEPROM.read(92);
+        if (lowalarm < 0 || lowalarm >= (int)m_lowalarmArray.size()) lowalarm = 0;  // blank EEPROM → 255
         return m_lowalarmArray[lowalarm];
     }
 

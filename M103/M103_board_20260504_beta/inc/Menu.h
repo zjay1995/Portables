@@ -52,11 +52,26 @@ public:
     RunMenuItem(String name, String parentName, int menuIndex, GasManager* gasManager, DataSource* dataSource, Loggingset* loggingset, Range* range, Outport* outport, MenuRenderer* renderer)
             : Menu(name, parentName, renderer), m_gasManager(gasManager), m_dataSource(dataSource), m_loggingset(loggingset), m_range(range), m_outport(outport) {}
     void action() override {
-        if (m_loggingset->getSelectedLoggingset() == 2) {
-            // ... [Keep your existing manual log logic] ...
-            // Just ensure fs::File is used:
-            // fs::File logFile = SPIFFS.open("/log.txt", FILE_READ);
+        // Manual logging mode: S on the run screen appends one entry to
+        // /log.txt and bumps the counter shown in the footer ("LOG: M n").
+        if (m_loggingset->getSelectedLoggingset() != 2) return;
+
+        fs::File logFile = SPIFFS.open("/log.txt", FILE_APPEND);
+        if (!logFile) {
+            Serial.println("Manual log: failed to open /log.txt");
+            return;
         }
+        struct tm timeinfo;
+        char ts[20] = "00000000_000000";
+        if (getLocalTime(&timeinfo, 10))
+            strftime(ts, sizeof(ts), "%Y%m%d_%H%M%S", &timeinfo);
+        logFile.printf("%s,MANUAL,%.1f\n", ts, m_dataSource->getDoubleValue());
+        logFile.close();
+
+        uint16_t count = EEPROM.readUShort(210);
+        if (count == 0xFFFF) count = 0;  // blank EEPROM
+        EEPROM.writeUShort(210, count + 1);
+        EEPROM.commit();
     }
 };
 
@@ -133,6 +148,8 @@ public:
         if (m_loggingsetIndex == 3) {
             fs::File logFile = SPIFFS.open("/log.txt", FILE_WRITE);
             if (logFile) { logFile.print(""); logFile.close(); }
+            EEPROM.writeUShort(210, 0);  // reset manual log counter
+            EEPROM.commit();
         }
         m_loggingset->selectLoggingsetByIndex(m_loggingsetIndex);
     }

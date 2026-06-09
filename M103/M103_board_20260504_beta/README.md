@@ -98,9 +98,12 @@ The M103 is a portable single-gas PID (Photoionization Detector) analyzer for VO
 | 100 | 1 | Display unit (0=ppm, 1=ppb, 2=1117) |
 | 120 | ~20 | Cal timestamp string "YYYY-MM-DD HH:MM" |
 | 200 | 4 | Logging interval index |
+| 210 | 2 | Manual log entry counter (ushort) |
 | 220 | 4 | Hour setting |
 | 230 | 4 | Minute setting |
 | 240 | 5 | Time backup: yr−2000, month, day, hour, minute |
+
+`EEPROM_SIZE` is 512 bytes (`inc/ConfigurationManager.h`) — it must stay larger than the highest address above, or writes beyond it are silently dropped.
 
 ---
 

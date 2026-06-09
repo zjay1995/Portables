@@ -49,47 +49,50 @@ void ConfigurationManager::loadFromEEPROM()
     #define SAFE_EEPROM_DOUBLE(addr) \
         ([&]() -> double { double _v = EEPROM.readDouble(addr); return isnan(_v) ? -1.0 : _v; }())
 
+    // NOTE: cal factors are forwarded with 9 decimal places. The default
+    // String(double) keeps only 2, which truncated small slopes (e.g.
+    // 0.004061 -> "0.00" -> 0.0) and zeroed the calibration on every boot.
 	// INTERCEPT
 	double intercept = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT_OFFSET);
 	if(intercept != -1)
-		notifyParamChanged(c_INTERCEPT_PARAM_NAME, String(intercept));
-	Serial.println("config: intercept: " + String(intercept));
+		notifyParamChanged(c_INTERCEPT_PARAM_NAME, String(intercept, 9));
+	Serial.println("config: intercept: " + String(intercept, 9));
 
     double intercept2 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT2_OFFSET);
     if(intercept2 != -1)
-        notifyParamChanged(c_INTERCEPT2_PARAM_NAME, String(intercept2));
-    Serial.println("config: intercept2: " + String(intercept2));
+        notifyParamChanged(c_INTERCEPT2_PARAM_NAME, String(intercept2, 9));
+    Serial.println("config: intercept2: " + String(intercept2, 9));
 
     double intercept3 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT3_OFFSET);
     if(intercept3 != -1)
-        notifyParamChanged(c_INTERCEPT3_PARAM_NAME, String(intercept3));
-    Serial.println("config: intercept3: " + String(intercept3));
+        notifyParamChanged(c_INTERCEPT3_PARAM_NAME, String(intercept3, 9));
+    Serial.println("config: intercept3: " + String(intercept3, 9));
 
     double intercept4 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_INTERCEPT4_OFFSET);
     if(intercept4 != -1)
-        notifyParamChanged(c_INTERCEPT4_PARAM_NAME, String(intercept4));
-    Serial.println("config: intercept4: " + String(intercept4));
+        notifyParamChanged(c_INTERCEPT4_PARAM_NAME, String(intercept4, 9));
+    Serial.println("config: intercept4: " + String(intercept4, 9));
 
-    // Slope
+	// Slope
     double slope = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE_OFFSET);
     if(slope != -1)
-        notifyParamChanged(c_SLOPE_PARAM_NAME, String(slope));
-    Serial.println("config: slope: " + String(slope));
+        notifyParamChanged(c_SLOPE_PARAM_NAME, String(slope, 9));
+    Serial.println("config: slope: " + String(slope, 9));
 
     double slope2 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE2_OFFSET);
     if(slope2 != -1)
-        notifyParamChanged(c_SLOPE2_PARAM_NAME, String(slope2));
-    Serial.println("config: slope2: " + String(slope2));
+        notifyParamChanged(c_SLOPE2_PARAM_NAME, String(slope2, 9));
+    Serial.println("config: slope2: " + String(slope2, 9));
 
     double slope3 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE3_OFFSET);
     if(slope3 != -1)
-        notifyParamChanged(c_SLOPE3_PARAM_NAME, String(slope3));
-    Serial.println("config: slope3: " + String(slope3));
+        notifyParamChanged(c_SLOPE3_PARAM_NAME, String(slope3, 9));
+    Serial.println("config: slope3: " + String(slope3, 9));
 
     double slope4 = SAFE_EEPROM_DOUBLE(EEPROM_GAS_SLOPE4_OFFSET);
     if(slope4 != -1)
-        notifyParamChanged(c_SLOPE4_PARAM_NAME, String(slope4));
-    Serial.println("config: slope4: " + String(slope4));
+        notifyParamChanged(c_SLOPE4_PARAM_NAME, String(slope4, 9));
+    Serial.println("config: slope4: " + String(slope4, 9));
 
     // Gas TCs — offsets are all 999 (disabled/out-of-bounds); reads safely
     // return -1 via SAFE_EEPROM_DOUBLE so no notify is sent and no crash occurs.

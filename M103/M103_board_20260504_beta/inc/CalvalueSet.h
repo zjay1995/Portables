@@ -95,6 +95,7 @@ public:
 
     int getSelectedCalvalue() {
         int calvalue = EEPROM.read(80);
+        if (calvalue < 0 || calvalue >= (int)m_calvalueArray.size()) calvalue = 0;  // blank EEPROM → 255
         return m_calvalueArray[calvalue];
     }
 

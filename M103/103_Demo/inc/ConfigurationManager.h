@@ -18,10 +18,10 @@ public:
 class ConfigurationManager : public ParamChangeListener
 {
 
-    const uint16_t EEPROM_SIZE = sizeof(int) * 7 + // Timer, Selected Gas Index, Range, Alarm, Calibration
-                                 sizeof(double) * 10 + // Gas calibration parameters (intercept + slope for 4 gases)
-                                 64 + // Device ID
-                                 32 * 2; // Wi-Fi SSID and Password
+    // Must cover the highest used address: time backup at 240-244 (see
+    // inc/TimeSync.h). The old computed value (236) silently dropped every
+    // write at >= 236, so the EEPROM time backup never persisted.
+    const uint16_t EEPROM_SIZE = 512;
 	
     const uint8_t EEPROM_TIMER_OFFSET = 0;
     const uint8_t EEPROM_GAS_SELECT_OFFSET = 4;

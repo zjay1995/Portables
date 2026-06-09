@@ -7,6 +7,8 @@
 
 class GasManager;
 class DataSource;
+class Loggingset;
+class Loggingtime;
 
 class DataLogger
 {
@@ -30,10 +32,14 @@ class DataLogger
 
     GasManager* m_gasManager;
 
+    Loggingset*  m_loggingset  = nullptr;
+    Loggingtime* m_loggingtime = nullptr;
+
     String createFileName(String ts, String gas, int secondsBetweenDataPoints, int fileIndex);
     String getCurrentDateTimeStr();
     void checkIfGracefulShutdown();
     bool shouldExecTick();
+    bool appendLogEntry(const char* tag);
 
 public:
 
@@ -41,6 +47,7 @@ public:
     ~DataLogger()=default;
 
     void init(DataSource* dataSource, GasManager* gasManager);
+    void setLoggingConfig(Loggingset* loggingset, Loggingtime* loggingtime);
     void handleTick();
 
     bool startFlashStoreSession();

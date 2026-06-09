@@ -64,7 +64,9 @@ Arduino firmware for ESP32 (Arduino IDE 1.8.x).
 - 8–71: Gas intercepts/slopes (doubles, 8 bytes each, 4 gases × 2 × 8)
 - 100: Display unit
 - 120: Cal timestamp string
+- 210: Manual log entry counter (ushort)
 - 240–244: Time backup (yr-2000, month, day, hour, minute)
+- `EEPROM_SIZE` = 512 (ConfigurationManager.h) — must exceed the highest address or writes are silently dropped
 
 ## Display
 - TFT_eSPI, 320×480 portrait, ILI9488

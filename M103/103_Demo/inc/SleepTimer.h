@@ -86,7 +86,7 @@ public:
 		m_startMillis = millis();	
 	}
 	
-	int getSelectedInterval() { m_intervalArray[m_selectedIndex]; } 
+	int getSelectedInterval() { return m_intervalArray[m_selectedIndex]; }
 	
 	void handleTick()
 	{
