@@ -130,13 +130,6 @@ public:
     void render(Menu* menu);
 };
 
-class TFTFlashLoggerMenuRenderer : public TFTMenuRenderer {
-    DataLogger* m_dataLogger;
-public:
-    TFTFlashLoggerMenuRenderer(TFT_eSPI* display, DataLogger* dataLogger) : TFTMenuRenderer(display), m_dataLogger(dataLogger) {}
-    void render(Menu* menu);
-};
-
 class TFTShowTimeMenuRenderer : public TFTMenuRenderer {
 public:
     TFTShowTimeMenuRenderer(TFT_eSPI* display) : TFTMenuRenderer(display) {}

@@ -83,7 +83,7 @@ void TFTGasMenuRenderer::render(Menu* menu) {
   m_display->setTextColor(TFT_WHITE, TFT_BLACK);
 
   // Header
-  drawCenteredString(m_display, "Range Selection", 5, 4);
+  drawCenteredString(m_display, "Gas Library", 5, 4);
   m_display->drawLine(0, 35, m_display->width(), 35, TFT_WHITE);
 
   // Content (Vertically Centered)
@@ -385,14 +385,6 @@ void TFTLoggingtimeMenuRenderer::render(Menu* menu) {
   m_display->drawLine(0, 35, m_display->width(), 35, TFT_WHITE);
   drawCenteredString(m_display, menu->getName(), m_display->height() / 2 - 26, 4, 2);
   drawStandardFooter(m_display);
-}
-
-void TFTFlashLoggerMenuRenderer::render(Menu* menu) {
-  m_display->setTextColor(TFT_WHITE, TFT_BLACK);
-  drawCenteredString(m_display, "DATA LOGGER", 5, 4);
-  m_display->drawLine(0, 35, m_display->width(), 35, TFT_WHITE);
-  drawCenteredString(m_display, menu->getName(), m_display->height() / 2 - 30, 2);
-  drawCenteredString(m_display, m_dataLogger->isFlashStoreSessionRunning() ? "Started" : "Idle", m_display->height() / 2, 4);
 }
 
 void TFTShowTimeMenuRenderer::render(Menu* menu) {

@@ -78,7 +78,15 @@ Arduino firmware for ESP32 (Arduino IDE 1.8.x).
 ## What Was Removed
 - WiFi, NTP, MQTT (all deleted — no `#include <WiFi.h>` anywhere)
 - `MQTTFlashPublisher.h`, `MQTTRealTimePublisher.h`, `WebServer.h` — deleted
-- DataLogger flash menu page — removed from menu sequence
+- DataLogger flash menu page + flash-session methods — deleted (logging is
+  now the Auto/Manual modes writing to `/log.txt`)
+- `inc/CalManager.h`, `inc/Gas.h`, `inc/image.h` — dead files, deleted
+  (`Gas.h` held a conflicting duplicate `Gas` class; the real one is in GasManager.h)
+- ConfigurationManager WiFi/DeviceID/TC/timer legacy methods — deleted
+- Range / User ID / DateTime menu pages were never reachable (built but not
+  added to the menu tree) — leftover constructions deleted from setup().
+  Range is fixed at the EEPROM value (default 5000 ppm); re-add a menu page
+  if range selection is ever needed.
 
 ## Common Pitfalls
 - `struct timeval` / `settimeofday` require `#include <sys/time.h>` (WiFi.h used to pull it in)

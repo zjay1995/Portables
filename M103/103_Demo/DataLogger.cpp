@@ -5,8 +5,6 @@
 #include "inc/LoggingTime.h"
 #include <EEPROM.h>
 
-portMUX_TYPE DataLogger::s_mtxLogger = portMUX_INITIALIZER_UNLOCKED;
-
 void DataLogger::init(DataSource* dataSource, GasManager* gasManager)
 {
   m_dataSource = dataSource;
@@ -16,37 +14,6 @@ void DataLogger::init(DataSource* dataSource, GasManager* gasManager)
     Serial.println("SPIFFS Mount Failed");
     return;
   }
-
-  checkIfGracefulShutdown();
-}
-
-void DataLogger::checkIfGracefulShutdown()
-{
-  // Logic to check if previous session ended correctly (simplified)
-}
-
-bool DataLogger::startFlashStoreSession()
-{
-  if(m_sessionRunning) return false;
-
-  m_sessionRunning = true;
-  m_fileIndex = 0;
-  m_currentSessionTimestamp = getCurrentDateTimeStr();
-  // Create logic here if needed
-  return true;
-}
-
-bool DataLogger::stopFlashStoreSession()
-{
-  if(!m_sessionRunning) return false;
-  m_sessionRunning = false;
-  if(m_file) m_file.close();
-  return true;
-}
-
-bool DataLogger::isFlashStoreSessionRunning() const
-{
-  return m_sessionRunning;
 }
 
 void DataLogger::setLoggingConfig(Loggingset* loggingset, Loggingtime* loggingtime)

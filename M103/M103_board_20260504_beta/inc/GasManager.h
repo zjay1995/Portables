@@ -135,32 +135,12 @@ public:
 
     void addGas(Gas g) { m_gases.push_back(g); }
 
-    void printinfo(double currentVoltage) {
-        // Print information about the gas configuration
-        Serial.println("M # Selected Gas Information:");
-        Serial.print("Gas Name: ");
-        Serial.println(m_gases[m_selectedGas].getName());
-
-        Serial.println(getCalgas());
-
-        // Calculate gas level using the provided current voltage
-        double gasLevel = calculateSLM(currentVoltage/1000); //convert V to mV
-        Serial.print("Calculated Gas Level (SLM) at Voltage ");
-        Serial.print(currentVoltage);  // Use the passed voltage
-        Serial.print(" mV: ");
-        Serial.println(gasLevel);
-
-        Serial.println("-------------------------------");
-    }
-
-
     void selectGasByIndex(int index)
     {
         Serial.println("selectGasByIndex");
         if(index >= 0 && index < m_gases.size())
         {
             m_selectedGas = index;
-            //m_configurationManager->saveGasSelectedToEEPROM(index);
             Serial.println("gas index saved " + String(index));
             EEPROM.writeInt(4, index);
             EEPROM.commit();
@@ -271,20 +251,6 @@ public:
         }
     }
 
-
-    void calibrate3(){
-
-    }
-
-    void selectPreviousGas()
-    {
-        Serial.println("selectPreviousGas");
-
-        if(m_selectedGas == 0)
-            m_selectedGas = m_gases.size() - 1;
-        else
-            m_selectedGas = m_selectedGas - 1;
-    }
 
     Gas& getSelectedGas() { return m_gases[m_selectedGas]; }
 

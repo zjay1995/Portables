@@ -12,32 +12,18 @@ class Loggingtime;
 
 class DataLogger
 {
-    int m_singleFileLimit = 10;
-    int m_maxSize;
-    fs::File m_file;
-
-    bool m_sessionRunning = false;
-
-    int m_currentValueCount = 0;
-
     int m_secondsBetweenDataPoints = 1;
 
     unsigned long m_lastTickMillis = 0;
 
     DataSource* m_dataSource;
 
-    String m_currentSessionTimestamp;
-    int m_fileIndex = 0;
-    String m_currentFileName;
-
     GasManager* m_gasManager;
 
     Loggingset*  m_loggingset  = nullptr;
     Loggingtime* m_loggingtime = nullptr;
 
-    String createFileName(String ts, String gas, int secondsBetweenDataPoints, int fileIndex);
     String getCurrentDateTimeStr();
-    void checkIfGracefulShutdown();
     bool shouldExecTick();
     bool appendLogEntry(const char* tag);
 
@@ -49,11 +35,4 @@ public:
     void init(DataSource* dataSource, GasManager* gasManager);
     void setLoggingConfig(Loggingset* loggingset, Loggingtime* loggingtime);
     void handleTick();
-
-    bool startFlashStoreSession();
-    bool stopFlashStoreSession();
-    bool isFlashStoreSessionRunning() const;
-
-public:
-    static portMUX_TYPE s_mtxLogger;
 };

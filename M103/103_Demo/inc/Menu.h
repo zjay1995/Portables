@@ -163,17 +163,8 @@ public:
     void action() { m_loggingtime->selectLoggingtimeByIndex(m_loggingtimeIndex); }
 };
 
-class DataLoggerFlashStoreMenuItem : public Menu {
-    DataLogger* m_dataLogger;
-public:
-    DataLoggerFlashStoreMenuItem(String name, String parentName, DataLogger* dataLogger, MenuRenderer* renderer) : Menu(name, parentName, renderer), m_dataLogger(dataLogger) {}
-    void action() {
-        if( m_dataLogger->isFlashStoreSessionRunning() ) m_dataLogger->stopFlashStoreSession();
-        else m_dataLogger->startFlashStoreSession();
-    }
-};
-
-// REMOVED: WiFiDumpMenuItem, WiFiRealTimeDumpMenuItem, NTPSyncMenuItem
+// REMOVED: WiFiDumpMenuItem, WiFiRealTimeDumpMenuItem, NTPSyncMenuItem,
+// DataLoggerFlashStoreMenuItem (flash-session feature deleted from DataLogger)
 
 class ShowTimeMenuItem : public Menu {
 public:

@@ -29,10 +29,6 @@
 
 using namespace std;
 
-#define USE_TFT_DISPLAY
-
-#define MAX_SCCM 5000
-
 // Firmware name/version are defined in Globals.cpp (c_FIRMWARE_NAME /
 // c_FIRMWARE_VERSION) so display renderers can show them too.
 // Update the date there when releasing a new build.
@@ -63,12 +59,6 @@ Loggingtime g_loggingtime;
 UnitSet g_unitset;
 DataLogger g_dataLogger;
 TimeSync g_timeSync;
-
-volatile bool CALIBRATION_MODE = false;
-unsigned long buttonPressStartTime = 0;
-bool isButtonBeingPressed = false;
-
-void IRAM_ATTR dummyTouchISR() {}
 
 void setup() {
   Serial.begin(115200);
@@ -260,17 +250,13 @@ void setup() {
   TFTRunMenuRenderer* runMenuRenderer = new TFTRunMenuRenderer(&tft, dataSource, &g_gasManager, &g_alarm, &g_lowalarm, &g_range, &g_calvalue, &g_outport, &g_loggingset, &g_loggingtime, &g_unitset);
   g_runRenderer = runMenuRenderer;
   MenuRenderer* sleepTimerMenuRenderer = new TFTSleepTimerMenuRenderer(&tft, &g_sleepTimer);
-  MenuRenderer* rangeMenuRenderer = new TFTRangeMenuRenderer(&tft, &g_range);
   MenuRenderer* alarmMenuRenderer = new TFTAlarmMenuRenderer(&tft, &g_alarm);
   MenuRenderer* lowalarmMenuRenderer = new TFTLowalarmMenuRenderer(&tft, &g_lowalarm);
   MenuRenderer* hourMenuRenderer = new TFTHourMenuRenderer(&tft, &g_hour);
   MenuRenderer* minuteMenuRenderer = new TFTMinuteMenuRenderer(&tft, &g_minute);
   MenuRenderer* calvalueMenuRenderer = new TFTCalvalueMenuRenderer(&tft, &g_calvalue);
-  MenuRenderer* outportMenuRenderer = new TFTOutportMenuRenderer(&tft, &g_outport);
   MenuRenderer* loggingsetMenuRenderer = new TFTLoggingsetMenuRenderer(&tft, &g_loggingset);
   MenuRenderer* loggingtimeMenuRenderer = new TFTLoggingtimeMenuRenderer(&tft, &g_loggingtime);
-  MenuRenderer* showTimeMenuRenderer = new TFTShowTimeMenuRenderer(&tft);
-  MenuRenderer* CalStartMenuRenderer = new TFTCalStartMenuRenderer(&tft);
   MenuRenderer* ZEROMenuRenderer = new TFTZEROMenuRenderer(&tft, dataSource, &g_gasManager);
   MenuRenderer* CalGasMenuRenderer = new TFTCalGasMenuRenderer(&tft, dataSource, &g_calvalue, &g_gasManager);
   MenuRenderer* CalResMenuRenderer = new TFTCalResMenuRenderer(&tft, dataSource, &g_calvalue, &g_gasManager);
@@ -293,11 +279,6 @@ void setup() {
   sleepTimerMenus.push_back(new SleepTimerMenuItem("6 hour", "TIMER", 3, &g_sleepTimer, sleepTimerMenuRenderer));
   sleepTimerMenus.push_back(new SleepTimerMenuItem("Continuous", "TIMER", 4, &g_sleepTimer, sleepTimerMenuRenderer));
   CompositeMenu* timerMenu = new CompositeMenu("TIMER", "Main Menu" , sleepTimerMenus);
-
-  vector<Menu*> rangeMenus;
-  rangeMenus.push_back(new RangeMenuItem("5000 ppm", "Range", 0, &g_range, rangeMenuRenderer));
-  rangeMenus.push_back(new RangeMenuItem("10000 ppm", "Range", 1, &g_range, rangeMenuRenderer));
-  CompositeMenu* rangeMenu = new CompositeMenu("Range", "Main Menu" , rangeMenus);
 
   vector<Menu*> alarmMenus;
   int highalarmid = 0;
@@ -335,12 +316,6 @@ void setup() {
   for (int i = 200; i <= 500; i += 100) calvalueMenus.push_back(new CalvalueMenuItem(String(i) + " ppm", "Cal Gas", calid++, &g_calvalue, calvalueMenuRenderer));
   CompositeMenu* calvalueMenu = new CompositeMenu("Calvalue", "Main Menu" , calvalueMenus);
 
-  vector<Menu*> outportMenus;
-  for (int i = 0; i <= 49; ++i) {
-    outportMenus.push_back(new OutportMenuItem("User " + String(i), " USER ID", i, &g_outport, outportMenuRenderer));
-  }
-  CompositeMenu* outportMenu = new CompositeMenu("USER ID", "Main Menu", outportMenus);
-
   vector<Menu*> loggingsetMenus;
   loggingsetMenus.push_back(new LoggingsetMenuItem("Off", " Gas", 0, &g_loggingset, loggingsetMenuRenderer));
   loggingsetMenus.push_back(new LoggingsetMenuItem("Auto", " Gas", 1, &g_loggingset, loggingsetMenuRenderer));
@@ -355,10 +330,6 @@ void setup() {
   loggingtimeMenus.push_back(new LoggingtimeMenuItem("10 minute", " Gas", 3, &g_loggingtime, loggingtimeMenuRenderer));
   loggingtimeMenus.push_back(new LoggingtimeMenuItem("1 hour", " Gas", 4, &g_loggingtime, loggingtimeMenuRenderer));
   CompositeMenu* loggingtimeMenu = new CompositeMenu("Loggingtime", "Main Menu" , loggingtimeMenus);
-
-  vector<Menu*> dateTimeMenus;
-  dateTimeMenus.push_back(new ShowTimeMenuItem("Current DateTime", "DATETIME", showTimeMenuRenderer));
-  CompositeMenu* dateTimeMenu = new CompositeMenu("DATETIME", "Main Menu" , dateTimeMenus);
 
   MenuRenderer* unitMenuRenderer = new TFTUnitMenuRenderer(&tft);
   vector<Menu*> unitMenus;
