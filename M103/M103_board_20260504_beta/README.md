@@ -114,41 +114,42 @@ Idx  Screen            Button Access       Notes
 ──────────────────────────────────────────────────────
  0   Run (live)        —                   Always visible
  1   Gas Library       DOWN
- 2   High Alarm        DOWN
- 3   PEL Low Alarm     DOWN
- 4   Logging Mode      DOWN
- 5   Logging Interval  DOWN
- 6   Set Hour          DOWN
- 7   Set Minute        DOWN
- 8   Display Unit      DOWN                ppm / ppb / 1117
- 9   Auto Power-Off    DOWN                5m / 1h / 2h / 6h / continuous
-10   Cal Info          DOWN                View only: factors + date
-── navLimit = 11 : DOWN wraps 10 → 0 ───────────────────
-11   Cal Zero          RIGHT from run      Step 1/2
-12   Cal Gas Value     auto-advance        Set span ppm
-13   Cal Span          auto-advance        Step 2/2
-14   Cal Result        auto-advance        Pass / Fail → run
+ 2   Range             DOWN                5000 / 10000 ppm over-range
+ 3   High Alarm        DOWN
+ 4   PEL Low Alarm     DOWN
+ 5   Logging Mode      DOWN
+ 6   Logging Interval  DOWN
+ 7   Set Hour          DOWN
+ 8   Set Minute        DOWN
+ 9   Display Unit      DOWN                ppm / ppb / 1117
+10   Auto Power-Off    DOWN                5m / 1h / 2h / 6h / continuous
+11   Cal Info          DOWN                View only: factors + date
+── navLimit = 12 : DOWN wraps 11 → 0 ───────────────────
+12   Cal Zero          RIGHT from run      Step 1/2
+13   Cal Gas Value     auto-advance        Set span ppm
+14   Cal Span          auto-advance        Step 2/2
+15   Cal Result        auto-advance        Pass / Fail → run
 ```
 
 ---
 
 ## 6. Button Behaviour
 
-| Button | Run (0) | Settings (1–10) | Cal zone (11–14) |
+| Button | Run (0) | Settings (1–11) | Cal zone (12–15) |
 |---|---|---|---|
-| **DOWN** | No action | Advance; wraps 10→0 | Abort → run (0) |
+| **DOWN** | No action | Advance; wraps 11→0 | Abort → run (0) |
 | **S** | Log trigger only | Save + banner + advance | Save + cal banner + advance |
-| **RIGHT** | Enter cal → screen 11 | Cycle value in submenu | Cycle value in submenu |
+| **RIGHT** | Enter cal → screen 12 | Cycle value in submenu | Cycle value in submenu |
 
 **S-button banners:**
 
 | Screen | Banner |
 |---|---|
 | 0 (run) | *(none)* |
-| 10 (cal info) | *(none — view only)* |
-| 1–9, 11–12 (settings / cal steps) | `VALUE SAVED` |
-| 13 (span capture) | `CAL COMPLETE` |
-| 14 (cal result) | `CAL FINISHED` |
+| 11 (cal info) | *(none — view only)* |
+| 1–10, 12–13 (settings / cal steps) | `VALUE SAVED` |
+| 14 (span capture) | `CAL COMPLETE` |
+| 15 (cal result) | `CAL FINISHED` |
 
 **Standard footer (all settings screens):** `MENU  |  SET  |  OPTIONS`
 **Cal gas value footer:** `ABORT  |  SET  |  OPTIONS`
@@ -176,7 +177,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Settings Screens (idx 1–9)
+### Settings Screens (idx 1–10)
 ```
 ┌──────────────────────┐
 │      [TITLE]         │  y=5, font 4
@@ -189,7 +190,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Info Screen (idx 10)
+### Cal Info Screen (idx 11)
 ```
 ┌──────────────────────┐
 │     CAL FACTORS      │
@@ -209,7 +210,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Zero (idx 11)
+### Cal Zero (idx 12)
 ```
 ┌──────────────────────┐
 │  STEP 1/2 — ZERO     │
@@ -225,7 +226,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Gas Value (idx 12)
+### Cal Gas Value (idx 13)
 ```
 ┌──────────────────────┐
 │    Cal Gas Value     │
@@ -238,7 +239,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Span (idx 13)
+### Cal Span (idx 14)
 ```
 ┌──────────────────────┐
 │  STEP 2/2 — SPAN     │
@@ -253,7 +254,7 @@ Idx  Screen            Button Access       Notes
 └──────────────────────┘
 ```
 
-### Cal Result (idx 14)
+### Cal Result (idx 15)
 ```
 ┌──────────────────────┐
 │      Cal Result      │
@@ -291,19 +292,19 @@ Holds 4 s on fault, 2 s on pass.
 RIGHT from run screen
         │
         ▼
-  [11] Zero ──S──► VALUE SAVED ──► [12] Cal Gas Value
+  [12] Zero ──S──► VALUE SAVED ──► [13] Cal Gas Value
                                            │ S
                                            ▼
                                      VALUE SAVED
                                            │
                                            ▼
-                                   [13] Span Capture
+                                   [14] Span Capture
                                            │ S
                                            ▼
                                      CAL COMPLETE
                                            │
                                            ▼
-                                    [14] Cal Result
+                                    [15] Cal Result
                                            │ S
                                            ▼
                                       CAL FINISHED

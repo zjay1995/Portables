@@ -40,26 +40,27 @@ Arduino firmware for ESP32 (Arduino IDE 1.8.x).
 ```
  0  Run screen         (navLimit boundary)
  1  Gas Library
- 2  High Alarm
- 3  PEL Low Alarm
- 4  Logging Mode
- 5  Logging Interval
- 6  Set Hour
- 7  Set Minute
- 8  Display Unit
- 9  Auto Power-Off     (sleep timer: 5m/1h/2h/6h/continuous)
-10  Cal Info           ← last normal menu page (view only)
-── navLimit = 11 ──────────────────────────────────────
-11  Cal Zero           ← RIGHT from run enters here
-12  Cal Gas Value
-13  Cal Span Capture
-14  Cal Result
+ 2  Range              (5000 / 10000 ppm over-range threshold)
+ 3  High Alarm
+ 4  PEL Low Alarm
+ 5  Logging Mode
+ 6  Logging Interval
+ 7  Set Hour
+ 8  Set Minute
+ 9  Display Unit
+10  Auto Power-Off     (sleep timer: 5m/1h/2h/6h/continuous)
+11  Cal Info           ← last normal menu page (view only)
+── navLimit = 12 ──────────────────────────────────────
+12  Cal Zero           ← RIGHT from run enters here
+13  Cal Gas Value
+14  Cal Span Capture
+15  Cal Result
 ```
 
 ## Button Logic Summary
-- **DOWN**: advance settings (0–10); if idx ≥ 11 → abort cal → run
-- **S**: save + `showSavedBanner()` + advance; idx 0 and 10 skip banner
-- **RIGHT**: from run → `setCurrentMenu(11)`; elsewhere → cycle submenu values
+- **DOWN**: advance settings (0–11); if idx ≥ 12 → abort cal → run
+- **S**: save + `showSavedBanner()` + advance; idx 0 and 11 skip banner
+- **RIGHT**: from run → `setCurrentMenu(12)`; elsewhere → cycle submenu values
 
 ## EEPROM Key Addresses
 - 0: Auto power-off index (0=5m, 1=1h, 2=2h, 3=6h, 4=continuous)
@@ -83,10 +84,10 @@ Arduino firmware for ESP32 (Arduino IDE 1.8.x).
 - `inc/CalManager.h`, `inc/Gas.h`, `inc/image.h` — dead files, deleted
   (`Gas.h` held a conflicting duplicate `Gas` class; the real one is in GasManager.h)
 - ConfigurationManager WiFi/DeviceID/TC/timer legacy methods — deleted
-- Range / User ID / DateTime menu pages were never reachable (built but not
-  added to the menu tree) — leftover constructions deleted from setup().
-  Range is fixed at the EEPROM value (default 5000 ppm); re-add a menu page
-  if range selection is ever needed.
+- User ID / DateTime menu pages were never reachable (built but not added
+  to the menu tree) — leftover constructions deleted from setup().
+  Range got a real settings page at index 2 instead (it sets the
+  over-range threshold only; the gain pin is not driven).
 
 ## Common Pitfalls
 - `struct timeval` / `settimeofday` require `#include <sys/time.h>` (WiFi.h used to pull it in)
