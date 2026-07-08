@@ -18,11 +18,6 @@ void ConfigurationManager::init()
 void ConfigurationManager::loadFromEEPROM()
 {
 	m_loadAllInProgress = true;
-	
-	int timerInterval = EEPROM.readInt(EEPROM_TIMER_OFFSET);
-	Serial.println("config: timer interval: " + String(timerInterval));
-	
-	//m_sleepTimer->selectIntervalByValue( timerInterval );	
 
     int range = EEPROM.read(72);
     Serial.println("config: range: " + String(range));
@@ -94,53 +89,6 @@ void ConfigurationManager::loadFromEEPROM()
         notifyParamChanged(c_SLOPE4_PARAM_NAME, String(slope4, 9));
     Serial.println("config: slope4: " + String(slope4, 9));
 
-    // Gas TCs — offsets are all 999 (disabled/out-of-bounds); reads safely
-    // return -1 via SAFE_EEPROM_DOUBLE so no notify is sent and no crash occurs.
-    double AirTC   = SAFE_EEPROM_DOUBLE(EEPROM_GAS_AIR_TC_OFFSET);
-    if(AirTC   != -1) notifyParamChanged(c_GAS_AIR_PARAM_NAME,   String(AirTC));
-    Serial.println("config: Air TC: "   + String(AirTC));
-
-    double O2TC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_O2_TC_OFFSET);
-    if(O2TC    != -1) notifyParamChanged(c_GAS_O2_PARAM_NAME,    String(O2TC));
-    Serial.println("config: O2 TC: "    + String(O2TC));
-
-    double N2TC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_N2_TC_OFFSET);
-    if(N2TC    != -1) notifyParamChanged(c_GAS_N2_PARAM_NAME,    String(N2TC));
-    Serial.println("config: N2 TC: "    + String(N2TC));
-
-    double HeTC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_He_TC_OFFSET);
-    if(HeTC    != -1) notifyParamChanged(c_GAS_He_PARAM_NAME,    String(HeTC));
-    Serial.println("config: He TC: "    + String(HeTC));
-
-    double H2TC    = SAFE_EEPROM_DOUBLE(EEPROM_GAS_H2_TC_OFFSET);
-    if(H2TC    != -1) notifyParamChanged(c_GAS_H2_PARAM_NAME,    String(H2TC));
-    Serial.println("config: H2 TC: "    + String(H2TC));
-
-    double ArCH4TC = SAFE_EEPROM_DOUBLE(EEPROM_GAS_ArCH4_TC_OFFSET);
-    if(ArCH4TC != -1) notifyParamChanged(c_GAS_ARCH4_PARAM_NAME, String(ArCH4TC));
-    Serial.println("config: ArCH4 TC: " + String(ArCH4TC));
-	
-	///////////////
-
-//	// WiFi SSID
-//	char wifiSsid[32] = { 0 };
-//	size_t readSsid = EEPROM.readString(EEPROM_WIFI_SSID_OFFSET, wifiSsid, 31);
-//	if (readSsid > 0)
-//		notifyParamChanged(c_WIFI_SSID_PARAM_NAME, String(wifiSsid));
-//	Serial.println("config: WiFi SSID: " + String(wifiSsid));
-//	m_wifiSsid = wifiSsid;
-//
-//	// WiFi PASSWORD
-//	char wifiPsw[32] = { 0 };
-//	size_t readPsw = EEPROM.readString(EEPROM_WIFI_PASSWORD_OFFSET, wifiPsw, 31);
-//	if (readPsw > 0)
-//		notifyParamChanged(c_WIFI_PASSWORD_PARAM_NAME, String(wifiPsw));
-//	Serial.println("config: WiFi PSW: " + String(wifiPsw));
-//	m_wifiPassword = wifiPsw;
-
-
-
-	/////////////////
 
 	m_loadAllInProgress = false;
 
@@ -205,16 +153,6 @@ void ConfigurationManager:: saveSlopeToEEPROM(double slope, bool doCommit)
 }
 
 
-void ConfigurationManager::saveTimerIntervalToEEPROM(int interval, bool doCommit)
-{	
-	if(m_loadAllInProgress)
-		return;
-	Serial.println("EEPROM saveTimerIntervalToEEPROM: " + String(interval));
-	size_t written = EEPROM.put(0, interval);
-	Serial.println("EEPROM written: " + String(written));
-	if(doCommit && !EEPROM.commit())
-		Serial.println("EEPROM commit ERROR!!!");
-}
 
  void ConfigurationManager::saveRangeToEEPROM(int range, bool doCommit)
  {
@@ -250,54 +188,6 @@ void ConfigurationManager::saveTimerIntervalToEEPROM(int interval, bool doCommit
      EEPROM.commit();
 
  }
-// void ConfigurationManager::saveGasSelectedToEEPROM(int gasIndex, bool doCommit)
-// {
-//     if(m_loadAllInProgress)
-//         return;
-//     Serial.println("EEPROM saveGasSelectedToEEPROM: " + String(gasIndex));
-//     size_t written = EEPROM.put(0, gasIndex);
-//     Serial.println("EEPROM written: " + String(written));
-//     if(doCommit && !EEPROM.commit())
-//         Serial.println("EEPROM commit ERROR!!!");
-// }
-
-
- void ConfigurationManager::saveWifiSSID(String ssid, bool doCommit)
-{
-	if (m_loadAllInProgress)
-		return;
-	Serial.println("EEPROM saveWifiSSID: " + ssid);
-	size_t written = EEPROM.writeString(EEPROM_WIFI_SSID_OFFSET, ssid.c_str());
-	Serial.println("EEPROM written: " + String(written));
-	if (doCommit && !EEPROM.commit())
-		Serial.println("EEPROM commit ERROR!!!");
-}
-
-void ConfigurationManager::saveWifiPassword(String password, bool doCommit)
-{
-	if (m_loadAllInProgress)
-		return;
-	Serial.println("EEPROM saveWifiPassword: " + password);
-	size_t written = EEPROM.writeString(EEPROM_WIFI_PASSWORD_OFFSET, password.c_str());
-	Serial.println("EEPROM written: " + String(written));
-	if (doCommit && !EEPROM.commit())
-		Serial.println("EEPROM commit ERROR!!!");
-}
-
-
-
-
-void ConfigurationManager::saveDeviceId(String id, bool doCommit)
-{
-	if (m_loadAllInProgress)
-		return;
-
-	Serial.println("EEPROM saveDeviceId: " + id);
-	size_t written = EEPROM.writeString(EEPROM_DEVICE_ID_OFFSET, id.c_str());
-	Serial.println("EEPROM written: " + String(written));
-	if (doCommit && !EEPROM.commit())
-		Serial.println("EEPROM commit ERROR!!!");
-}
 
 void ConfigurationManager::setupEEPROM()
 {

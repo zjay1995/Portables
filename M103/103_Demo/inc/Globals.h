@@ -4,6 +4,9 @@
 
 #include "ConfigurationManager.h"
 
+extern const char* c_FIRMWARE_NAME;
+extern const char* c_FIRMWARE_VERSION;
+
 extern const uint8_t c_BUTTON_DOWN_PIN;
 extern const uint8_t c_BUTTON_S_PIN;
 extern const uint8_t c_BUTTON_RIGHT_PIN;

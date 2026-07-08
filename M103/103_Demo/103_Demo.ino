@@ -33,9 +33,9 @@ using namespace std;
 
 #define MAX_SCCM 5000
 
-// Firmware version. Update the date when releasing a new build.
-#define FIRMWARE_NAME    "M103"
-#define FIRMWARE_VERSION "05/13/26"
+// Firmware name/version are defined in Globals.cpp (c_FIRMWARE_NAME /
+// c_FIRMWARE_VERSION) so display renderers can show them too.
+// Update the date there when releasing a new build.
 
 // DEMO: intercept=1.040 V (zero baseline at 1040 mV), slope=0.84.
 // ppm = ((mV/1000 - 1.040) / 0.84) * 1000  →  1040 mV = 0 ppm, 1292 mV ≈ 300 ppm.
@@ -73,7 +73,7 @@ void IRAM_ATTR dummyTouchISR() {}
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("PID M103 " FIRMWARE_VERSION);
+  Serial.println(String("PID M103 ") + c_FIRMWARE_VERSION);
   Wire.begin(23, 22); 
 
   BT.begin("ESP32 PID M103");
@@ -165,11 +165,11 @@ void setup() {
 
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextFont(4);
-    tft.drawString(FIRMWARE_NAME, sw / 2, sh / 2 + 110);
+    tft.drawString(c_FIRMWARE_NAME, sw / 2, sh / 2 + 110);
 
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.setTextFont(4);
-    tft.drawString(FIRMWARE_VERSION, sw / 2, sh / 2 + 145);
+    tft.drawString(c_FIRMWARE_VERSION, sw / 2, sh / 2 + 145);
 
     delay(2000);
     tft.fillScreen(TFT_BLACK);

@@ -29,13 +29,9 @@
 
 using namespace std;
 
-#define USE_TFT_DISPLAY
-
-#define MAX_SCCM 5000
-
-// Firmware version. Update the date when releasing a new build.
-#define FIRMWARE_NAME    "M103"
-#define FIRMWARE_VERSION "05/13/26"
+// Firmware name/version are defined in Globals.cpp (c_FIRMWARE_NAME /
+// c_FIRMWARE_VERSION) so display renderers can show them too.
+// Update the date there when releasing a new build.
 
 GasManager g_gasManager(-2.054456771, 1, 0, 0, 0, 0, 0, 0, 0, 0);
 BluetoothSerial BT;
@@ -64,15 +60,9 @@ UnitSet g_unitset;
 DataLogger g_dataLogger;
 TimeSync g_timeSync;
 
-volatile bool CALIBRATION_MODE = false;
-unsigned long buttonPressStartTime = 0;
-bool isButtonBeingPressed = false;
-
-void IRAM_ATTR dummyTouchISR() {}
-
 void setup() {
   Serial.begin(115200);
-  Serial.println("PID M103 " FIRMWARE_VERSION);
+  Serial.println(String("PID M103 ") + c_FIRMWARE_VERSION);
   Wire.begin(23, 22); 
 
   BT.begin("ESP32 PID M103");
@@ -174,11 +164,11 @@ void setup() {
 
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextFont(4);
-    tft.drawString(FIRMWARE_NAME, sw / 2, sh / 2 + 110);
+    tft.drawString(c_FIRMWARE_NAME, sw / 2, sh / 2 + 110);
 
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.setTextFont(4);
-    tft.drawString(FIRMWARE_VERSION, sw / 2, sh / 2 + 145);
+    tft.drawString(c_FIRMWARE_VERSION, sw / 2, sh / 2 + 145);
 
     delay(2000);
     tft.fillScreen(TFT_BLACK);
@@ -266,11 +256,8 @@ void setup() {
   MenuRenderer* hourMenuRenderer = new TFTHourMenuRenderer(&tft, &g_hour);
   MenuRenderer* minuteMenuRenderer = new TFTMinuteMenuRenderer(&tft, &g_minute);
   MenuRenderer* calvalueMenuRenderer = new TFTCalvalueMenuRenderer(&tft, &g_calvalue);
-  MenuRenderer* outportMenuRenderer = new TFTOutportMenuRenderer(&tft, &g_outport);
   MenuRenderer* loggingsetMenuRenderer = new TFTLoggingsetMenuRenderer(&tft, &g_loggingset);
   MenuRenderer* loggingtimeMenuRenderer = new TFTLoggingtimeMenuRenderer(&tft, &g_loggingtime);
-  MenuRenderer* showTimeMenuRenderer = new TFTShowTimeMenuRenderer(&tft);
-  MenuRenderer* CalStartMenuRenderer = new TFTCalStartMenuRenderer(&tft);
   MenuRenderer* ZEROMenuRenderer = new TFTZEROMenuRenderer(&tft, dataSource, &g_gasManager);
   MenuRenderer* CalGasMenuRenderer = new TFTCalGasMenuRenderer(&tft, dataSource, &g_calvalue, &g_gasManager);
   MenuRenderer* CalResMenuRenderer = new TFTCalResMenuRenderer(&tft, dataSource, &g_calvalue, &g_gasManager);
@@ -297,7 +284,7 @@ void setup() {
   vector<Menu*> rangeMenus;
   rangeMenus.push_back(new RangeMenuItem("5000 ppm", "Range", 0, &g_range, rangeMenuRenderer));
   rangeMenus.push_back(new RangeMenuItem("10000 ppm", "Range", 1, &g_range, rangeMenuRenderer));
-  CompositeMenu* rangeMenu = new CompositeMenu("Range", "Main Menu" , rangeMenus);
+  CompositeMenu* rangeMenu = new CompositeMenu("Range", "Main Menu", rangeMenus);
 
   vector<Menu*> alarmMenus;
   int highalarmid = 0;
@@ -335,12 +322,6 @@ void setup() {
   for (int i = 200; i <= 500; i += 100) calvalueMenus.push_back(new CalvalueMenuItem(String(i) + " ppm", "Cal Gas", calid++, &g_calvalue, calvalueMenuRenderer));
   CompositeMenu* calvalueMenu = new CompositeMenu("Calvalue", "Main Menu" , calvalueMenus);
 
-  vector<Menu*> outportMenus;
-  for (int i = 0; i <= 49; ++i) {
-    outportMenus.push_back(new OutportMenuItem("User " + String(i), " USER ID", i, &g_outport, outportMenuRenderer));
-  }
-  CompositeMenu* outportMenu = new CompositeMenu("USER ID", "Main Menu", outportMenus);
-
   vector<Menu*> loggingsetMenus;
   loggingsetMenus.push_back(new LoggingsetMenuItem("Off", " Gas", 0, &g_loggingset, loggingsetMenuRenderer));
   loggingsetMenus.push_back(new LoggingsetMenuItem("Auto", " Gas", 1, &g_loggingset, loggingsetMenuRenderer));
@@ -355,10 +336,6 @@ void setup() {
   loggingtimeMenus.push_back(new LoggingtimeMenuItem("10 minute", " Gas", 3, &g_loggingtime, loggingtimeMenuRenderer));
   loggingtimeMenus.push_back(new LoggingtimeMenuItem("1 hour", " Gas", 4, &g_loggingtime, loggingtimeMenuRenderer));
   CompositeMenu* loggingtimeMenu = new CompositeMenu("Loggingtime", "Main Menu" , loggingtimeMenus);
-
-  vector<Menu*> dateTimeMenus;
-  dateTimeMenus.push_back(new ShowTimeMenuItem("Current DateTime", "DATETIME", showTimeMenuRenderer));
-  CompositeMenu* dateTimeMenu = new CompositeMenu("DATETIME", "Main Menu" , dateTimeMenus);
 
   MenuRenderer* unitMenuRenderer = new TFTUnitMenuRenderer(&tft);
   vector<Menu*> unitMenus;
@@ -384,29 +361,30 @@ void setup() {
   CompositeMenu* calresMenu = new CompositeMenu("Cal Result", "Main Menu", calresMenus);
 
   // --- FINAL MENU STRUCTURE ---
-  // Indices 0-10: normal scrollable settings (DOWN cycles through these).
-  // Indices 11-14: calibration sequence, only reachable via RIGHT from run screen.
+  // Indices 0-11: normal scrollable settings (DOWN cycles through these).
+  // Indices 12-15: calibration sequence, only reachable via RIGHT from run screen.
   vector<Menu*> horizontalMenus;
   horizontalMenus.push_back(runMenu);        // 0
   horizontalMenus.push_back(libraryMenu);    // 1
-  horizontalMenus.push_back(alarmMenu);      // 2
-  horizontalMenus.push_back(lowalarmMenu);   // 3
-  horizontalMenus.push_back(loggingsetMenu); // 4
-  horizontalMenus.push_back(loggingtimeMenu);// 5
-  horizontalMenus.push_back(hourMenu);       // 6
-  horizontalMenus.push_back(minuteMenu);     // 7
-  horizontalMenus.push_back(unitMenu);       // 8  Display unit (ppm / ppb / 1117)
-  horizontalMenus.push_back(timerMenu);      // 9  Auto power-off idle time
-  horizontalMenus.push_back(calInfoMenu);    // 10 Cal factors & date (view only)
-  horizontalMenus.push_back(calMenu);        // 11 Cal Step 1: Zero
-  horizontalMenus.push_back(calvalueMenu);   // 12 Cal Step 2: set span gas value
-  horizontalMenus.push_back(calgasMenu);     // 13 Cal Step 3: capture span
-  horizontalMenus.push_back(calresMenu);     // 14 Cal result
+  horizontalMenus.push_back(rangeMenu);      // 2  Range (5000 / 10000 ppm)
+  horizontalMenus.push_back(alarmMenu);      // 3
+  horizontalMenus.push_back(lowalarmMenu);   // 4
+  horizontalMenus.push_back(loggingsetMenu); // 5
+  horizontalMenus.push_back(loggingtimeMenu);// 6
+  horizontalMenus.push_back(hourMenu);       // 7
+  horizontalMenus.push_back(minuteMenu);     // 8
+  horizontalMenus.push_back(unitMenu);       // 9  Display unit (ppm / ppb / 1117)
+  horizontalMenus.push_back(timerMenu);      // 10 Auto power-off idle time
+  horizontalMenus.push_back(calInfoMenu);    // 11 Cal factors & date (view only)
+  horizontalMenus.push_back(calMenu);        // 12 Cal Step 1: Zero
+  horizontalMenus.push_back(calvalueMenu);   // 13 Cal Step 2: set span gas value
+  horizontalMenus.push_back(calgasMenu);     // 14 Cal Step 3: capture span
+  horizontalMenus.push_back(calresMenu);     // 15 Cal result
 
   Serial.println("horizontal menu " + String(horizontalMenus.size()));
   CompositeMenu* verticalMenu = new CompositeMenu("Main Menu", "", horizontalMenus);
   g_mainMenu = verticalMenu;
-  g_mainMenu->setNavLimit(11);  // DOWN only cycles indices 0-10; cal zone (11-14) is right-button only
+  g_mainMenu->setNavLimit(12);  // DOWN only cycles indices 0-11; cal zone (12-15) is right-button only
   g_mainMenu->print();
 
   setupButtons();
@@ -481,13 +459,13 @@ static void showSavedBanner(const char* msg) {
 void setupButtons() {
   Keyboard* keyboard = new Keyboard();
 
-  // DOWN: advance through regular settings (0-10). In cal zone, escape back to run.
+  // DOWN: advance through regular settings (0-11). In cal zone, escape back to run.
   keyboard->addOnDownPressedFctor([] {
     g_sleepTimer.resetIdleCounter();
     tft.fillScreen(TFT_BLACK);
     if (g_runRenderer) g_runRenderer->invalidate();
     int idx = g_mainMenu->getCurrentIndex();
-    if (idx >= 11) {
+    if (idx >= 12) {
       g_mainMenu->setCurrentMenu(0);  // escape cal sequence
     } else {
       g_mainMenu->moveToNext();
@@ -501,20 +479,20 @@ void setupButtons() {
     g_mainMenu->action();
     g_timeSync.initTimeFromRTC();
 
-    if (idx == 0 || idx == 10) {
+    if (idx == 0 || idx == 11) {
       // Run screen: S triggers logging only. CalInfo: view-only, no banner.
       tft.fillScreen(TFT_BLACK);
       if (g_runRenderer) g_runRenderer->invalidate();
-      if (idx == 10) g_mainMenu->moveToNext();  // calInfo → back to run
+      if (idx == 11) g_mainMenu->moveToNext();  // calInfo → back to run
       return;
     }
 
-    showSavedBanner(idx == 13 ? "CAL COMPLETE" : idx == 14 ? "CAL FINISHED" : "VALUE SAVED");
+    showSavedBanner(idx == 14 ? "CAL COMPLETE" : idx == 15 ? "CAL FINISHED" : "VALUE SAVED");
     if (g_runRenderer) g_runRenderer->invalidate();
 
-    if (idx >= 11 && idx < 14) {
+    if (idx >= 12 && idx < 15) {
       g_mainMenu->setCurrentMenu(idx + 1);  // next cal step
-    } else if (idx == 14) {
+    } else if (idx == 15) {
       g_mainMenu->setCurrentMenu(0);        // cal done → back to run
     } else {
       g_mainMenu->moveToNext();             // next regular setting (wraps to run)
@@ -527,7 +505,7 @@ void setupButtons() {
     tft.fillScreen(TFT_BLACK);
     if (g_runRenderer) g_runRenderer->invalidate();
     if (g_mainMenu->getCurrentIndex() == 0) {
-      g_mainMenu->setCurrentMenu(11);  // jump straight to cal Zero (calInfo is menu-only)
+      g_mainMenu->setCurrentMenu(12);  // jump straight to cal Zero (calInfo is menu-only)
     } else {
       ((CompositeMenu*)g_mainMenu->getCurrentMenu())->moveToNext();
     }
