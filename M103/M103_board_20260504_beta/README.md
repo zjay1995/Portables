@@ -1,6 +1,6 @@
-# M103 Portable PID Analyzer
+# M103 Portable PID Analyzer - Jason Wang
 **FW:** 07/08/26 · **MCU:** ESP32-WROOM-32E · **Display:** 3.5" 320×480 TFT (ILI9488)
-**Auther:** Jason Wang
+
 Single-gas PID (VOC) analyzer. SPIFFS logging, Bluetooth log retrieval, 3-button keypad + power switch.
 
 **Build:** Arduino IDE, ESP32 Dev Module, 4MB No OTA (2MB APP/2MB SPIFFS), 240 MHz. See `TESTING.md` for the bench procedure.
