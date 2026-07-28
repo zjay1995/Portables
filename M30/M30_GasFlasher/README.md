@@ -148,9 +148,20 @@ the default 1.2 MB app partition, which is why the partition scheme is set.
 
 Pick a different preset from the *Board* list, or edit the *FQBN* box directly,
 if a unit uses a different module. The FQBN is saved with the rest of the
-settings. If you change it, confirm against the board settings the firmware is
-normally built with — an ESP32 flashed with the wrong partition scheme boots to
-a reset loop.
+settings.
+
+**Which part of the FQBN actually matters.** The M30 sketch addresses every pin
+by raw GPIO number (`12`, `13`, `14`, `19`, `25`, `5`, and `23`/`22` for the
+OLED) and uses no board-specific macros — no `LED_BUILTIN`, no `A0`, no
+`ARDUINO_*`. So the board identity (`esp32` vs `featheresp32`) does not change
+the compiled code. What does matter is the **partition scheme**: the firmware
+links in BluetoothSerial, WiFi, MQTT, the web server and SPIFFS, which will not
+fit the default 1.2 MB app partition. If a build overflows, switch to the
+*Huge App* preset; if a flashed unit boot-loops, the partition scheme is the
+first thing to check.
+
+Note that the available option names differ per board — if a preset is
+rejected with *Invalid FQBN*, pick another entry from the *Board* list.
 
 ---
 

@@ -73,6 +73,11 @@ _HINTS: tuple[tuple[str, str], ...] = (
         "bigger app partition (Huge App).",
     ),
     (
+        "invalid fqbn",
+        "The board does not accept one of the FQBN options — the option names "
+        "differ per board. Pick an entry from the Board list instead.",
+    ),
+    (
         "access is denied",
         "The COM port is busy. Close the Arduino Serial Monitor or any terminal "
         "using this unit, then try again.",

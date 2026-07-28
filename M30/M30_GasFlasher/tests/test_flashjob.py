@@ -84,6 +84,10 @@ class HintTests(unittest.TestCase):
         hint = hint_for([".text' section exceeds available space in board"])
         self.assertIn("Huge App", hint)
 
+    def test_bad_fqbn_option(self) -> None:
+        hint = hint_for(["Error during build: Invalid FQBN: getting build properties"])
+        self.assertIn("Board list", hint)
+
     def test_unknown_failure_has_no_hint(self) -> None:
         self.assertEqual(hint_for(["something went sideways"]), "")
 
