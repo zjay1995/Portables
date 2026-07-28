@@ -1,0 +1,6 @@
+# Runtime: pyserial only, for friendly COM-port names.  Without it the tool
+# falls back to `arduino-cli board list`.  tkinter ships with python.org builds.
+pyserial>=3.5
+
+# Packaging the Windows .exe (see build_windows_exe.bat)
+pyinstaller>=6.0
