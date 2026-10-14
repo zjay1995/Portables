@@ -15,7 +15,7 @@ Arduino firmware for ESP32 (Arduino IDE 1.8.x).
 
 | File | Role |
 |---|---|
-| `M103_board_20260504_beta.ino` | Main sketch — setup(), loop(), menu build, button handlers |
+| `M103_board_20261014_beta.ino` | Main sketch — setup(), loop(), menu build, button handlers |
 | `MenuRenderer.cpp` | All TFT screen renderers |
 | `TimeSync.cpp` | RTC read + EEPROM time backup |
 | `ConfigurationManager.cpp` | EEPROM load/save orchestration |
