@@ -49,7 +49,7 @@ Run in order. Check each box on pass.
 
 ## T9 — Calibration [ ]
 - RIGHT from run → ZERO. Apply zero gas.
-- `[ STABLE ]` only after signal settles (several seconds, not instant).
+- Zero: `[ STABLE ]` only after signal holds steady 20 s (not instant). Span: 4 s.
 - S → select bottle ppm → S → SPAN. Apply span gas, wait `[ STABLE ]`, S.
 - Result: **Success**.
 - Reading = bottle value ±10% on span, ~0 on zero.

@@ -407,15 +407,20 @@ void TFTCalStartMenuRenderer::render(Menu* menu) {
 // chan: 0 = Zero screen, 1 = Span screen — separate histories so leftover
 // zero-gas samples can't mark the span reading stable (and vice versa).
 // Samples are taken every 500 ms to match the ADS1115 cache refresh (2 Hz);
-// sampling every render frame just re-read the same cached value 8 times
-// and reported STABLE immediately. 8 samples = a 4 s observation window.
+// sampling every render frame just re-read the same cached value many times
+// and reported STABLE immediately. Window length per screen: Zero = 40
+// samples (20 s), Span = 8 samples (4 s).
 // If the screen hasn't rendered for >2 s (operator left and came back),
 // the history restarts.
+static const int STABLE_MAX_SAMPLES = 40;
+static const int STABLE_WINDOW[2] = { 40, 8 };
+
 static bool isStableMv(uint16_t mv, int chan) {
-  static uint16_t history[2][8];
+  static uint16_t history[2][STABLE_MAX_SAMPLES];
   static int idx[2] = {0, 0};
   static bool primed[2] = {false, false};
   static unsigned long lastSample[2] = {0, 0};
+  const int n = STABLE_WINDOW[chan];
 
   unsigned long now = millis();
   if (lastSample[chan] != 0 && now - lastSample[chan] > 2000) {
@@ -425,13 +430,13 @@ static bool isStableMv(uint16_t mv, int chan) {
   if (lastSample[chan] == 0 || now - lastSample[chan] >= 500) {
     lastSample[chan] = now;
     history[chan][idx[chan]] = mv;
-    idx[chan] = (idx[chan] + 1) % 8;
+    idx[chan] = (idx[chan] + 1) % n;
     if (idx[chan] == 0) primed[chan] = true;
   }
   if (!primed[chan]) return false;
 
   uint16_t lo = history[chan][0], hi = history[chan][0];
-  for (int i = 1; i < 8; i++) {
+  for (int i = 1; i < n; i++) {
     if (history[chan][i] < lo) lo = history[chan][i];
     if (history[chan][i] > hi) hi = history[chan][i];
   }
