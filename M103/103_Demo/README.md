@@ -1,5 +1,5 @@
 # Model 103 (M103) — Display Demo
-**Sketch:** 103_Demo &nbsp;|&nbsp; **Based on:** M103_board_20260504_beta (07/08/26) &nbsp;|&nbsp; **MCU:** Adafruit HUZZAH32 (ESP32 Feather)
+**Sketch:** 103_Demo &nbsp;|&nbsp; **Based on:** M103_board_20261014_beta (07/08/26) &nbsp;|&nbsp; **MCU:** Adafruit HUZZAH32 (ESP32 Feather)
 
 ---
 
@@ -7,7 +7,7 @@
 
 This is a display-only demo build of the M103 PID Analyzer firmware, intended for trade-show or bench demonstration units. It runs on an **Adafruit HUZZAH32** (ESP32 Feather) driving the same 3.5-inch 320×480 ILI9488 TFT panel as the production M103.
 
-The code is a direct copy of `M103_board_20260504_beta` with three small changes:
+The code is a direct copy of `M103_board_20261014_beta` with three small changes:
 - `getMiliVolts()` in `AnalogSourceInput.h` returns a sine-wave animated value (0–300 ppm, 60-second period) instead of reading the ADS1115.
 - `getMiliVolts_battery()` returns a fixed 3900 mV (78%, green) — the HUZZAH32 does not have the M103 INA219 / IO-34 battery circuit.
 - `GasManager` default calibration set to intercept = 1.040 V, slope = 1.0 with an EEPROM-blank fallback, so the reading displays correctly on a fresh board.
