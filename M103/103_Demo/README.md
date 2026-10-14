@@ -1,5 +1,5 @@
 # Model 103 (M103) — Display Demo
-**Sketch:** 103_Demo &nbsp;|&nbsp; **Based on:** M103_board_20261014_beta (07/08/26) &nbsp;|&nbsp; **MCU:** Adafruit HUZZAH32 (ESP32 Feather)
+**Sketch:** 103_Demo &nbsp;|&nbsp; **Based on:** M103_board_20261014_beta (10/14/26) &nbsp;|&nbsp; **MCU:** Adafruit HUZZAH32 (ESP32 Feather)
 
 ---
 
