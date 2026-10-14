@@ -1,4 +1,4 @@
-# M103 Test Procedure — FW 07/08/26 Jason Wang
+# M103 Test Procedure — FW 10/14/26 Jason Wang
 
 Run in order. Check each box on pass.
 
@@ -9,9 +9,9 @@ Run in order. Check each box on pass.
 > **Recalibrate after flashing.** Old calibrations are invalid on this version.
 
 ## T1 — Boot [ ]
-- Splash shows logo + `M103` + `07/08/26`.
+- Splash shows logo + `M103` + `10/14/26`.
 - SYSTEM CHECK: all 5 rows `[ OK ]`, then "ALL SYSTEMS OK".
-- Serial prints `PID M103 07/08/26`.
+- Serial prints `PID M103 10/14/26`.
 
 ## T2 — Run screen [ ]
 - Time, battery %, live reading, HIGH/PEL setpoints, RANGE, SIGNAL mV all shown.
