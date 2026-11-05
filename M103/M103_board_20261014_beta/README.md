@@ -17,11 +17,10 @@ Single-gas PID (VOC) analyzer. SPIFFS logging, Bluetooth log retrieval, 3-button
 | LAMPOUT | 16 | out | UV lamp, active-high |
 | PID_GAIN | 17 | — | reserved, not driven |
 | HVON_STATUS | 36 | in only | HV feedback |
-| VBATT_ADC | 34 | ADC | 100K/100K divider |
 | POWER HOLD | 25 | out | active-high |
 | I2C SDA / SCL | 23 / 22 | — | non-default pins — always `Wire.begin(23, 22)` |
 
-**I2C devices:** PCF8563 RTC @0x51 · ADS1115 @0x48 (PID signal, A0, GAIN_ONE, 0.125 mV/bit) · INA219 @0x40 (battery; IO 34 fallback) · SHT4x @0x44 (T/RH).
+**I2C devices:** PCF8563 RTC @0x51 · ADS1115 @0x48 (PID signal, A0, GAIN_ONE, 0.125 mV/bit) · INA219 @0x40 (battery, only source) · SHT4x @0x44 (T/RH).
 
 **Battery scale:** 3.4 V empty → 4.05 V full.
 

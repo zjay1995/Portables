@@ -57,11 +57,9 @@ public:
         return m_lastReadValue;
     }
 
-    // Battery reading.
-    // Primary path: INA219 over I2C (returns bus voltage in V).
-    // If the INA219 isn't populated/responding, fall back to the IO 34
-    // resistor divider per the M103 schematic (VBATT --100K--+--100K--GND,
-    // tap to IO 34). Doubling the ADC reading accounts for the 1:2 divider.
+    // Battery reading: INA219 bus voltage only (no ADC fallback on the
+    // current board). Reads 0 if the INA219 is missing, so the run screen
+    // shows an empty red battery instead of a made-up value.
     uint16_t getMiliVolts_battery()
     {
         unsigned long now = millis();
@@ -70,15 +68,8 @@ public:
         {
             m_lastReadValueTick_b = now;
             float busVoltage = m_ina219->getBusVoltage_V();
-            // INA219 returns 0.0 when not present or shorted -- treat that
-            // as a signal to use the on-board divider.
-            if (busVoltage > 0.5f) {
-                m_lastReadValue_battery = static_cast<uint16_t>(busVoltage * 1000);
-            } else {
-                int raw = analogRead(34);
-                // 12-bit ADC, ADC_11db ~ 3.3V FS, divider 1:2.
-                m_lastReadValue_battery = static_cast<uint16_t>((raw * 3300L * 2L) / 4095L);
-            }
+            m_lastReadValue_battery = (busVoltage > 0.5f)
+                ? static_cast<uint16_t>(busVoltage * 1000) : 0;
         }
         return m_lastReadValue_battery;
     }

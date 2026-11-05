@@ -78,7 +78,6 @@ All five items are hardcoded to **[ OK ]** in the demo build. The screen shows "
 | LAMPOUT | IO 16 | OUTPUT | UV lamp enable, active-high |
 | PID_GAIN | IO 17 | — | Reserved (gain select unused; firmware does not drive it) |
 | HVON_STATUS | IO 36 (SENSOR_VP) | INPUT only | HV stage feedback |
-| VBATT_ADC | IO 34 | ADC input | 100K/100K divider from VBATT |
 | POWER HOLD | IO 25 | OUTPUT | Keep power on, active-high |
 | I2C SDA | IO 23 | Bidirectional | RTC, ADS1115, INA219, SHT4x |
 | I2C SCL | IO 22 | Bidirectional | Same bus |

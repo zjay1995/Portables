@@ -104,11 +104,9 @@ void setup() {
   bool sc_ads = (Wire.endTransmission() == 0);
 
   bool sc_ina = ina219.begin();
-  if (!sc_ina) Serial.println("INA219 not found -- falling back to ADC on IO 34 for battery");
+  if (!sc_ina) Serial.println("INA219 not found -- battery reading unavailable");
   Wire.begin(23, 22);
 
-  // Battery voltage fallback via IO 34 resistor divider.
-  analogSetPinAttenuation(VBATT_ADC_PIN, ADC_11db);
 
   bool sc_sht = sht4x.begin();
   if (!sc_sht) Serial.println("Couldn't find SHT4x");
