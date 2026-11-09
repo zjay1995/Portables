@@ -12,12 +12,12 @@ Single-gas PID (VOC) analyzer. SPIFFS logging, Bluetooth log retrieval, 3-button
 | Button DOWN | 13 | in (pullup) | advance menu |
 | Button S | 21 | in (pullup) | save / confirm |
 | Button RIGHT | 14 | in (pullup) | cycle value / enter cal |
-| Power switch | 12 | in / EXT0 | deep-sleep wake |
-| ALARM | 15 | out | buzzer/relay, active-high |
+| TPAD_G (power) | — | — | hardware on/off switch, not wired to ESP32 |
+| ALARM | 2 | out | buzzer via MOSFET, active-high, 10k pull-down |
 | LAMPOUT | 16 | out | UV lamp, active-high |
 | PID_GAIN | 17 | — | reserved, not driven |
 | HVON_STATUS | 36 | in only | HV feedback |
-| POWER HOLD | 25 | out | active-high |
+| PWR_OFF | 25 | out | HIGH cuts 3.3 V, 10k pull-down |
 | I2C SDA / SCL | 23 / 22 | — | non-default pins — always `Wire.begin(23, 22)` |
 
 **I2C devices:** PCF8563 RTC @0x51 · ADS1115 @0x48 (PID signal, A0, GAIN_ONE, 0.125 mV/bit) · INA219 @0x40 (battery, only source) · SHT4x @0x44 (T/RH).

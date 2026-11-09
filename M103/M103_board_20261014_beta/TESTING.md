@@ -28,8 +28,8 @@ Run in order. Check each box on pass.
 ## T5 — Alarm [ ]
 - Set High Alarm below reading (or apply gas).
 - Display: reading red, chip `HIGH`.
-- IO 15 goes HIGH (~3.3 V), buzzer/relay on.
-- Clear condition. IO 15 LOW, chip `NORMAL`.
+- IO 2 goes HIGH (~3.3 V), buzzer/relay on.
+- Clear condition. IO 2 LOW, chip `NORMAL`.
 - Repeat once for PEL.
 
 ## T6 — Logging [ ]
@@ -44,7 +44,7 @@ Run in order. Check each box on pass.
 
 ## T8 — Auto power-off [ ]
 - Set 5 min. Leave idle. Unit sleeps at 5 min.
-- Power switch wakes it.
+- Unit powers fully off (IO 25 goes HIGH). Power switch turns it back on.
 - Set Continuous. Stays on.
 
 ## T9 — Calibration [ ]

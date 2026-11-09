@@ -82,9 +82,10 @@ void setup() {
 
   delay(500);
 
-  // DEEP-SLEEP init
-  pinMode(25, OUTPUT);
-  digitalWrite(25, HIGH);
+  // Power-off line (IO 25): HIGH cuts the 3.3 V rail, LOW = stay on.
+  // Board needs a pull-down so it stays LOW through reset and boot.
+  pinMode(PWR_OFF_PIN, OUTPUT);
+  digitalWrite(PWR_OFF_PIN, LOW);
 
   // ALARM relay/buzzer drive (idle low).
   pinMode(ALARM_PIN, OUTPUT);
@@ -96,9 +97,6 @@ void setup() {
 
   // High-voltage status feedback (input-only pin, GPIO 36 / SENSOR_VP).
   pinMode(HVON_STATUS_PIN, INPUT);
-
-  // Wake from deep sleep on the power-switch button (formerly TPAD_G), IO 12.
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_12, LOW);
 
   // Initialize I2C-bus sensors and capture pass/fail for system check display.
   // ADS1115: begin() returns void — probe address 0x48 directly via I2C.
@@ -511,22 +509,10 @@ void setupButtons() {
   });
 
   keyboard->addOnOnPressedFctor([] {
-    gpio_hold_en(GPIO_NUM_5);
-    gpio_deep_sleep_hold_en();
-    Serial.println("SleepTimer deep_sleep!");
-    digitalWrite(25, LOW);
-    Serial.flush();
-    delay(1000);
-    esp_deep_sleep_start();
+    g_sleepTimer.powerOff();
   });
   keyboard->addOnCalibrationComboPressedFctor([] {
-    gpio_hold_en(GPIO_NUM_5);
-    gpio_deep_sleep_hold_en();
-    Serial.println("SleepTimer deep_sleep!");
-    digitalWrite(25, LOW);
-    Serial.flush();
-    delay(1000);
-    esp_deep_sleep_start();
+    g_sleepTimer.powerOff();
   });
 }
 

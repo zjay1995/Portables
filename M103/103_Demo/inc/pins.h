@@ -4,10 +4,11 @@
 //   Tpad Up    -> IO 14   (still named c_BUTTON_RIGHT_PIN internally)
 //   Tpad Down  -> IO 13
 //   Tpad S     -> IO 21
-//   Tpad G     -> removed; replaced by power switch on IO 12
+//   Tpad G     -> not connected to the ESP32 (hardware power switch)
 //
 // Sensor / analog
-//   ALARM      -> IO 15   (digital out, alarm relay/buzzer drive)
+//   ALARM      -> IO 2    (digital out, buzzer via MOSFET; needs pull-down)
+//   PWR_OFF    -> IO 25   (digital out, HIGH = cut 3.3 V; needs pull-down)
 //   LAMPOUT    -> IO 16   (digital out, PID UV lamp enable, active-high)
 //   PID_GAIN   -> IO 17   (schematic net only — gain select unused; firmware
 //                          does not drive it, range is display/over-range only)
@@ -22,9 +23,9 @@
 #define BUTTON_UP_PIN     14
 #define BUTTON_DOWN_PIN   13
 #define BUTTON_S_PIN      21
-#define BUTTON_PWR_PIN    12
 
-#define ALARM_PIN         15
+#define ALARM_PIN         2
+#define PWR_OFF_PIN       25
 #define LAMPOUT_PIN       16
 #define PID_GAIN_PIN      17   // reserved, not driven by firmware
 #define HVON_STATUS_PIN   36

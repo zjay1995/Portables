@@ -5,6 +5,7 @@
 #include <SSD1306.h>
 #include <Wire.h>
 #include <EEPROM.h>
+#include "pins.h"
 
 class SleepTimer
 {
@@ -93,8 +94,21 @@ public:
 	int getSelectedInterval() { return m_intervalArray[m_selectedIndex]; }
 	int getSelectedIndex()    { return m_selectedIndex; }
 
-	// Auto power-off after the selected idle time (was hardcoded to 30 min
-	// and ignored the setting). Sequence mirrors the ON-button handler.
+	// Cut power: drive PWR_OFF HIGH and latch it through deep sleep, so the
+	// line can't fall back LOW (via the board pull-down) and leave the unit
+	// stuck asleep with the rail still on.
+	void powerOff()
+	{
+		Serial.println("Power off");
+		Serial.flush();
+		digitalWrite(PWR_OFF_PIN, HIGH);
+		gpio_hold_en((gpio_num_t)PWR_OFF_PIN);
+		gpio_deep_sleep_hold_en();
+		delay(1000);
+		esp_deep_sleep_start();
+	}
+
+	// Auto power-off after the selected idle time.
 	void handleTick()
 	{
 		int minutes = m_intervalArray[m_selectedIndex];
@@ -102,14 +116,6 @@ public:
 
 		unsigned long passedMillis = millis() - m_startMillis;
 		if (passedMillis >= (unsigned long)minutes * 60UL * 1000UL)
-		{
-			Serial.println("SleepTimer: idle timeout -- deep sleep");
-			Serial.flush();
-			gpio_hold_en(GPIO_NUM_5);
-			gpio_deep_sleep_hold_en();
-			digitalWrite(25, LOW);  // release power hold
-			delay(1000);
-			esp_deep_sleep_start();
-		}
+			powerOff();
 	}
 };
