@@ -818,6 +818,9 @@ SSD1306InfoMenuRenderer::SSD1306InfoMenuRenderer(SSD1306Wire* display,
 
 void SSD1306InfoMenuRenderer::render(Menu* menu)
 {
+    // Every line is sized for the 128 px display with ArialMT_Plain_10
+    // (13 px line height): header + 4 rows at 12 px spacing.
+
     // Read calibration date from EEPROM (address 120, max 31 bytes ASCII)
     char calDate[32] = { 0 };
     EEPROM.readString(120, calDate, 31);
@@ -827,24 +830,32 @@ void SSD1306InfoMenuRenderer::render(Menu* menu)
     m_display->setFont(ArialMT_Plain_10);
     m_display->setColor(WHITE);
 
-    // ── Header ──
+    // ── Header: gas + full-scale range, e.g. "INFO: CH2O 0-50 ppm" ──
+    Gas& gas = m_gasManager->getSelectedGas();
+    float fs = SENSOR_RANGE_FS;
+    String range = (fs == (long)fs) ? String((long)fs) : String(fs, 1);
     m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-    m_display->drawString(64, 0, "DEVICE INFO");
-    m_display->drawLine(0, 11, 128, 11);
+    m_display->drawString(64, 0, "INFO: " + gas.getName() + " 0-" + range + " " + SENSOR_UNIT_LABEL);
+    m_display->drawLine(0, 12, 128, 12);
 
-    // ── SW version ──
-    m_display->drawString(64, 12, String(m_fwVersion));
+    m_display->setTextAlignment(TEXT_ALIGN_LEFT);
+
+    // ── Firmware: build mode + date (the full version string is too wide) ──
+    m_display->drawString(0, 13, "FW: " + String(m_fwVersion));
 
     // ── Cal date ──
-    m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-    m_display->drawString(0, 22, "Cal: " + String(hasDate ? calDate : "not calibrated"));
+    m_display->drawString(0, 25, "Cal: " + String(hasDate ? calDate : "not calibrated"));
 
-    // ── Active gas + its cal factors ──
-    Gas& gas = m_gasManager->getSelectedGas();
-    m_display->drawString(0, 32, "Gas: " + gas.getName());
-    m_display->drawString(0, 42, "Int: " + String(m_gasManager->getSelectedIntercept(), 5));
-    m_display->drawString(0, 52, "Slp: " + String(m_gasManager->getSelectedSlope(),     5));
+    // ── Cal factors in technician units ──
+    // Intercept is the zero-air detector voltage (V); slope is detector mV per
+    // unit of gas (calibrate2 divides the volt delta by ppm/1000).
+    if (m_gasManager->isCalibrated()) {
+        m_display->drawString(0, 37, "Zero: " + String(m_gasManager->getSelectedIntercept() * 1000.0, 0) + " mV");
+        m_display->drawString(0, 49, "Sens: " + String(m_gasManager->getSelectedSlope(), 1) + " mV/" + SENSOR_UNIT_LABEL);
+    } else {
+        m_display->drawString(0, 37, "Zero: --");
+        m_display->drawString(0, 49, "Sens: not calibrated");
+    }
 
-    m_display->setTextAlignment(TEXT_ALIGN_LEFT);
     m_display->display();
 }

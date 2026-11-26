@@ -34,7 +34,9 @@ using namespace std;
 #define USE_SSD1306_DISPLAY
 
 // Build mode (PROD / DEV / DEMO) is selected in inc/BuildConfig.h.
-#define FW_VERSION  "M30 CH2O " FW_MODE_NAME " 06/02/2026"
+#define FW_DATE     "06/02/2026"
+#define FW_VERSION  "M30 CH2O " FW_MODE_NAME " " FW_DATE   // full string (serial / Bluetooth)
+#define FW_SHORT    FW_MODE_NAME " " FW_DATE                // fits the 128 px display
 
 #if BUILD_MODE == BUILD_DEV
   #warning "DEV build: detector is SIMULATED - not for field use"
@@ -292,7 +294,7 @@ void setup() {
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_CENTER);
     display.drawString(64,  0, "SYSTEM CHECK");
-    display.drawString(64, 10, FW_VERSION);
+    display.drawString(64, 10, "M30 " FW_SHORT);   // full FW_VERSION is 134 px, too wide
     display.drawLine(0, 21, 128, 21);
 
     // Helper: label at left, result at right
@@ -339,7 +341,7 @@ void setup() {
 
   MenuRenderer* flashLoggerMenuRenderer = new SSD1306FlashLoggerMenuRenderer(&display, &g_dataLogger);
   MenuRenderer* CalStartMenuRenderer = new SSD1306CalStartMenuRenderer(&display);
-  MenuRenderer* infoMenuRenderer     = new SSD1306InfoMenuRenderer(&display, &g_gasManager, FW_VERSION);
+  MenuRenderer* infoMenuRenderer     = new SSD1306InfoMenuRenderer(&display, &g_gasManager, FW_SHORT);
 
   MenuRenderer* ZEROMenuRenderer = new SSD1306ZEROMenuRenderer(&display, dataSource, &g_gasManager);
   MenuRenderer* CalGasMenuRenderer = new SSD1306CalGasMenuRenderer(&display, dataSource, &g_calvalue, &g_gasManager);
@@ -623,6 +625,17 @@ static void showSavedBanner(const char* msg, const char* sub = nullptr) {
   display.setFont(ArialMT_Plain_10);
 }
 
+// The Info page is read-only: any navigation key (DOWN, S, RIGHT) returns to
+// the Run screen. The ON key keeps its power-off function everywhere.
+static const int MENU_IDX_INFO = 13;
+static bool exitInfoPageIfShown()
+{
+  if (g_mainMenu->getCurrentIndex() != MENU_IDX_INFO) return false;
+  g_mainMenu->setCurrentMenu(0);
+  syncSubMenuToCurrent();
+  return true;
+}
+
 void setupButtons()
 {
 
@@ -632,6 +645,7 @@ void setupButtons()
 
     g_sleepTimer.resetIdleCounter();
     Serial.println("PRESS DOWN");
+    if (exitInfoPageIfShown()) return;
 
     // M30: ZeroOnly removed — DOWN from Run enters the full cal sequence
     // directly at Cal Zero (idx 1). Elsewhere DOWN cycles sub-menu options.
@@ -655,6 +669,7 @@ void setupButtons()
 
     g_sleepTimer.resetIdleCounter();
     Serial.println("PRESS S");
+    if (exitInfoPageIfShown()) return;
 
     int idx = g_mainMenu->getCurrentIndex();
     g_mainMenu->action();  // execute save + advance screen
@@ -699,6 +714,7 @@ void setupButtons()
 
     g_sleepTimer.resetIdleCounter();
     Serial.println("PRESS RIGHT (main menu next)");
+    if (exitInfoPageIfShown()) return;
 
     // RIGHT acts as the demos' UP — cycles the main menu and syncs each
     // sub-menu's cursor to its EEPROM-saved value.
