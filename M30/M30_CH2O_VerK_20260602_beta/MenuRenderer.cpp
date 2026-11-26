@@ -68,10 +68,10 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   digitalWrite(ALARM_PIN, LOW);  // Turn the alarm off
 
   int range = m_range->getSelectedRange();
-  int alarm = m_alarm->getSelectedAlarm();
-  int lowalarm = m_lowalarm->getSelectedLowalarm();
+  float alarm = m_alarm->getSelectedAlarm();
+  float lowalarm = m_lowalarm->getSelectedLowalarm();
   int outport = m_outport->getSelectedOutport();
-  int calvalue = m_calvalue->getSelectedCalvalue();
+  float calvalue = m_calvalue->getSelectedCalvalue();
   int64_t startMicros = esp_timer_get_time();
   int v_b = m_dataSource->getRawMiliVolts_battery();
   int loggingset = m_loggingset->getSelectedLoggingset();
@@ -163,8 +163,10 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   // ---------------------------------------------------------
 
   // Check triggers
-  bool triggerHigh = (alarm != 0 && sensorValue > alarm);
-  bool triggerLow  = (lowalarm != 0 && sensorValue > lowalarm);
+  // Setpoints are floats so sub-1 ppm limits (e.g. CH2O 0.75 ppm) work; a
+  // setpoint of 0 means the alarm is Off.
+  bool triggerHigh = (alarm    > 0.0f && sensorValue > alarm);
+  bool triggerLow  = (lowalarm > 0.0f && sensorValue > lowalarm);
   bool isAlarmActive = triggerHigh || triggerLow;
 
   if (isAlarmActive) {
@@ -341,7 +343,7 @@ SSD1306AlarmMenuRenderer::SSD1306AlarmMenuRenderer(SSD1306Wire* display, Alarm* 
 
 void SSD1306AlarmMenuRenderer::render(Menu* menu)
 {
-  int alarm = m_alarm->getSelectedAlarm();
+  float alarm = m_alarm->getSelectedAlarm();
   m_display->clear();
   m_display->setColor(WHITE);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
@@ -371,7 +373,7 @@ SSD1306LowalarmMenuRenderer::SSD1306LowalarmMenuRenderer(SSD1306Wire* display, L
 
 void SSD1306LowalarmMenuRenderer::render(Menu* menu)
 {
-  int lowalarm = m_lowalarm->getSelectedLowalarm();
+  float lowalarm = m_lowalarm->getSelectedLowalarm();
   m_display->clear();
   m_display->setColor(WHITE);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
@@ -462,7 +464,7 @@ SSD1306CalvalueMenuRenderer::SSD1306CalvalueMenuRenderer(SSD1306Wire* display, C
 
 void SSD1306CalvalueMenuRenderer::render(Menu* menu)
 {
-  int calvalue = m_calvalue->getSelectedCalvalue();
+  float calvalue = m_calvalue->getSelectedCalvalue();
 
   m_display->clear();
   m_display->setColor(WHITE);
@@ -668,13 +670,13 @@ SSD1306CalGasMenuRenderer::SSD1306CalGasMenuRenderer(SSD1306Wire* display, DataS
 }
 void SSD1306CalGasMenuRenderer::render(Menu* menu)
 { m_display->clear();
-  int calvalue = m_calvalue->getSelectedCalvalue();
+  float calvalue = m_calvalue->getSelectedCalvalue();
   m_display->setColor(WHITE);
   m_display->setFont(ArialMT_Plain_10);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
   m_display->drawString(64, 0, "Calibration - Cal Gas");
   m_display->drawLine(0, 14, 128, 14);
-  m_display->drawString(64, 17, String("Cal gas: " + String(calvalue) + " " + SENSOR_UNIT_LABEL).c_str());
+  m_display->drawString(64, 17, String("Cal gas: " + String(calvalue, SENSOR_RES_DIGITS) + " " + SENSOR_UNIT_LABEL).c_str());
   m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
   m_display->drawString(64, 37, "Press S when Stable");
 
@@ -708,8 +710,8 @@ void SSD1306BumpTestMenuRenderer::render(Menu* menu)
 
   m_display->drawString(64, 0, "Bump Test");
   m_display->drawLine(0, 14, 128, 14);
-  m_display->drawString(64, 17, String("Ref: " + String((long)refPpm) + " " + SENSOR_UNIT_LABEL).c_str());
-  m_display->drawString(64, 27, String("Read: " + String((long)sensor_val) + " " + SENSOR_UNIT_LABEL).c_str());
+  m_display->drawString(64, 17, String("Ref: " + String(refPpm, SENSOR_RES_DIGITS) + " " + SENSOR_UNIT_LABEL).c_str());
+  m_display->drawString(64, 27, String("Read: " + String(sensor_val, SENSOR_RES_DIGITS) + " " + SENSOR_UNIT_LABEL).c_str());
   m_display->drawString(64, 37, "Apply cal gas, press S");
 
   // Footer: MENU / SET / OPTION

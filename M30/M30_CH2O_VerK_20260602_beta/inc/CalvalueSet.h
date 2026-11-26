@@ -38,10 +38,10 @@ public:
         m_u8g2 = u8g2;
     }
 
-    void selectCalvalueByValueNoEEPROMSave(int calvalue)
+    void selectCalvalueByValueNoEEPROMSave(float calvalue)
     {
         for(int i=0; i < k_calvalueCount; i++)
-            if((int)k_calvalueArr[i] == calvalue)
+            if(fabsf(k_calvalueArr[i] - calvalue) < 0.0001f)
             {
                 m_selectedCalvalue = i;
                 break;
@@ -64,10 +64,10 @@ public:
         return;
     }
 
-    void selectCalvalueByValue(int calvalue)
+    void selectCalvalueByValue(float calvalue)
     {
         for(int i=0; i < k_calvalueCount; i++)
-            if((int)k_calvalueArr[i] == calvalue)
+            if(fabsf(k_calvalueArr[i] - calvalue) < 0.0001f)
             {
                 m_selectedCalvalue = i;
                 m_configurationManager->saveCalvalueToEEPROM(i);
@@ -95,10 +95,12 @@ public:
         m_startMillis = millis();
     }
 
-    int getSelectedCalvalue() {
+    // Returns the setpoint as a float: sub-1 values (e.g. 0.75 ppm) must not
+    // be truncated to 0, which would silently disable the alarm / zero the span.
+    float getSelectedCalvalue() {
         int calvalue = EEPROM.read(80);
         if (calvalue < 0 || calvalue >= k_calvalueCount) calvalue = 0;
-        return (int)k_calvalueArr[calvalue];
+        return k_calvalueArr[calvalue];
     }
 
 };

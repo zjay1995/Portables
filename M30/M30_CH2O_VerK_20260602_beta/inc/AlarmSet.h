@@ -38,10 +38,10 @@ public:
         m_u8g2 = u8g2;
     }
 
-    void selectAlarmByValueNoEEPROMSave(int alarm)
+    void selectAlarmByValueNoEEPROMSave(float alarm)
     {
         for(int i=0; i < k_alarmCount; i++)
-            if((int)k_alarmArr[i] == alarm)
+            if(fabsf(k_alarmArr[i] - alarm) < 0.0001f)
             {
                 m_selectedAlarm = i;
                 break;
@@ -64,10 +64,10 @@ public:
         return;
     }
 
-    void selectAlarmByValue(int alarm)
+    void selectAlarmByValue(float alarm)
     {
         for(int i=0; i < k_alarmCount; i++)
-            if((int)k_alarmArr[i] == alarm)
+            if(fabsf(k_alarmArr[i] - alarm) < 0.0001f)
             {
                 m_selectedAlarm = i;
                 m_configurationManager->saveAlarmToEEPROM(i);
@@ -95,10 +95,12 @@ public:
         m_startMillis = millis();
     }
 
-    int getSelectedAlarm() {
+    // Returns the setpoint as a float: sub-1 values (e.g. 0.75 ppm) must not
+    // be truncated to 0, which would silently disable the alarm / zero the span.
+    float getSelectedAlarm() {
         int alarm = EEPROM.read(76);
         if (alarm < 0 || alarm >= k_alarmCount) alarm = 0;
-        return (int)k_alarmArr[alarm];
+        return k_alarmArr[alarm];
     }
 
 };

@@ -551,7 +551,7 @@ public:
         if (ref <= 0.0f) { m_lastResult = false; return; }
         double deviation = fabs(ppm - (double)ref) / (double)ref;
         m_lastResult = (deviation <= 0.20);
-        Serial.println("BumpTest: ppm=" + String(ppm, 1) + " ref=" + String(ref, 0)
+        Serial.println("BumpTest: ppm=" + String(ppm, SENSOR_RES_DIGITS) + " ref=" + String(ref, SENSOR_RES_DIGITS)
                        + " dev=" + String(deviation * 100, 1) + "% -> "
                        + (m_lastResult ? "OK" : "RECAL"));
     }

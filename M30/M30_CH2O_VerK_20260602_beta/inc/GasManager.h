@@ -212,12 +212,19 @@ public:
 
     void calibrate2(double cal){
         m_calgas = cal / 1000;
-        int calvalue = Calvalue().getSelectedCalvalue();
+        // Keep the cal-gas concentration as a float: sub-1 ppm span gases
+        // (e.g. 0.5 ppm) used to truncate to 0 and produce an infinite slope.
+        float calvalue = Calvalue().getSelectedCalvalue();
         double calgasv = calvalue / 1000.0;
         calSuccess = false;  // Reset success status
 
-        Serial.println(calvalue);
-        Serial.println(calgasv);
+        Serial.println(calvalue, 3);
+        Serial.println(calgasv, 6);
+
+        if (!(calvalue > 0.0f)) {
+            Serial.println("Span rejected: cal gas concentration is not > 0 — slope not saved.");
+            return;
+        }
 
         // Span-rejection guard: a span/zero voltage delta that is too small to
         // produce a reliable slope (disconnected/dead sensor, or no cal gas
