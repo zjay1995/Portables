@@ -17,7 +17,7 @@
 #define FW_VERSION_MAJOR  1
 #define FW_VERSION_MINOR  0
 #define FW_VERSION_PATCH  0
-#define FW_PRERELEASE     1               // 0 = release, N = beta.N
+#define FW_PRERELEASE     2               // 0 = release, N = beta.N
 #define FW_RELEASE_DATE   "2026-11-26"
 
 // Saved-settings (EEPROM) layout. Bump together with MAJOR when the meaning or

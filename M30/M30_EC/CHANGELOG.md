@@ -5,6 +5,12 @@ rules are at the top of `inc/Version.h`: MAJOR = settings layout changed
 (recalibrate), MINOR = feature / new sensor, PATCH = fix, `-beta.N` = not yet
 verified on hardware.
 
+## 1.0.0-beta.2 — 2026-11-26
+
+- Fixed `SleepTimer.h` `getSelectedInterval()`: it had no `return`, so it
+  returned a garbage value. Nothing calls it today (its only use is commented
+  out), so no behaviour changes; it is now safe to use.
+
 ## 1.0.0-beta.1 — 2026-11-26
 
 Branch `claude/m30-ch2o-calibration-m8snoe` (no PR yet; `main` does not have
@@ -80,8 +86,7 @@ ESP32 or a unit. **First boot after flashing reloads defaults: recalibrate.**
   per-sensor DEV simulation are off until filled in.
 - H2S 2000 ppm: over-range (display cap) is 1100 ppm, below its 2000 ppm full
   scale — readings above 1100 show OVER. Unchanged; confirm it is intended.
-- `SleepTimer.h`: `getSelectedInterval()` has no `return` (returns garbage).
-  Found during the build check; not changed.
+- ~~`SleepTimer.h`: `getSelectedInterval()` has no `return`.~~ Fixed in beta.2.
 - Still open from 0.9.0: PEL is not an 8-hour TWA; missing-sensor input floats
   (~305 mV → CAL?, not FAULT); whole-mV resolution; other product builds
   still have the June EEPROM/ADC bugs.
