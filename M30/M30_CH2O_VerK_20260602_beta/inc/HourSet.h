@@ -89,6 +89,8 @@ public:
     int getSelectedHour()
     {
         int hour = EEPROM.read(220);
+        // A blank board reads 0xFF (255); never index past the table.
+        if (hour < 0 || hour >= (int)m_hourArray.size()) hour = 0;
         return m_hourArray[hour];
     }
 };

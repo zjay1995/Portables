@@ -92,6 +92,8 @@ public:
 
     int getSelectedMinute() {
         int minute = EEPROM.read(230);
+        // A blank board reads 0xFF (255); never index past the table.
+        if (minute < 0 || minute >= (int)m_minuteArray.size()) minute = 0;
         return m_minuteArray[minute];
     }
 };
