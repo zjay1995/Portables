@@ -9,6 +9,8 @@
 #include "pins.h"
 #include <Wire.h>
 
+#include "BuildConfig.h"   // FEATURE_* switches
+
 class ButtonPressListener
 {
 public:
@@ -153,6 +155,19 @@ public:
 
 	~Keyboard()=default;
 
+	// Is a press of this length a single click on DOWN / S / RIGHT?
+	static bool isNavClick(unsigned long pressDuration)
+	{
+#if FEATURE_WIDE_CLICK_WINDOW
+		// 30 ms rejects contact bounce; 800 ms stays well below the
+		// 1750 ms ON-button combo and lets slow presses register.
+		return pressDuration > 30 && pressDuration < 800;
+#else
+		return pressDuration > c_BUTTON_SINGLE_CLICK_HOLD_DURATION &&
+		       pressDuration < c_BUTTON_SINGLE_CLICK_HOLD_DURATION + 200;
+#endif
+	}
+
 	void addOnDownPressedFctor(const std::function<void()>& f) { m_onDownPressed = f; }
 	void addOnSPressedFctor(const std::function<void()>& f) { m_onSPressed = f; }
 	void addOnRightPressedFctor(const std::function<void()>& f) { m_onRightPressed = f; }
@@ -177,8 +192,7 @@ public:
 		{
 			m_buttonDownTotalMillis = pressDuration;
 			if(
-				pressDuration > c_BUTTON_SINGLE_CLICK_HOLD_DURATION &&
-				pressDuration < c_BUTTON_SINGLE_CLICK_HOLD_DURATION + 200 &&
+				isNavClick(pressDuration) &&
 				m_buttonRightTotalMillis == 0 &&
 				m_buttonSTotalMillis == 0
 			)
@@ -191,8 +205,7 @@ public:
 		{
 			m_buttonRightTotalMillis = pressDuration;
 			if(
-				pressDuration > c_BUTTON_SINGLE_CLICK_HOLD_DURATION &&
-				pressDuration < c_BUTTON_SINGLE_CLICK_HOLD_DURATION + 200 &&
+				isNavClick(pressDuration) &&
 				m_buttonSTotalMillis == 0 &&
 				m_buttonDownTotalMillis == 0
 			)
@@ -206,8 +219,7 @@ public:
 			m_buttonSTotalMillis = pressDuration;
 
 			if(
-				pressDuration > c_BUTTON_SINGLE_CLICK_HOLD_DURATION &&
-				pressDuration < c_BUTTON_SINGLE_CLICK_HOLD_DURATION + 200 &&
+				isNavClick(pressDuration) &&
 				m_buttonRightTotalMillis == 0 &&
 				m_buttonDownTotalMillis == 0
 			)

@@ -40,3 +40,16 @@
 #else
   #error "BuildConfig.h: BUILD_MODE must be BUILD_PROD, BUILD_DEV or BUILD_DEMO"
 #endif
+
+// =============================================================================
+// Feature switches — set to 0 to roll a feature back to the original behaviour
+// without touching the code. Independent of BUILD_MODE.
+// =============================================================================
+
+// DOWN / S / RIGHT accept any press of 30-800 ms as a click.
+// 0 = original window: only presses of 110-310 ms count (quick taps and
+//     longer presses are silently ignored). The ON (power) button always
+//     keeps the original window.
+#ifndef FEATURE_WIDE_CLICK_WINDOW
+  #define FEATURE_WIDE_CLICK_WINDOW  1
+#endif
