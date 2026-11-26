@@ -2,8 +2,9 @@
 
 ## 2026-11-26
 
-Branch `claude/m30-ch2o-calibration-m8snoe`. Not yet compiled for the ESP32
-or tested on a unit. After flashing, **recalibrate (zero + span)**.
+Branch `claude/m30-ch2o-calibration-m8snoe` (11 commits, no PR yet; `main`
+does not have these changes). Final state not yet compiled for the ESP32 or
+tested on a unit. After flashing, **recalibrate (zero + span)**.
 
 ### Safety fixes
 - **Alarm setpoints below 1 ppm work again.** High alarm 0.75 ppm and all PEL
@@ -29,10 +30,10 @@ or tested on a unit. After flashing, **recalibrate (zero + span)**.
   line fixed too. `c11b585`
 
 ### Buttons
-- **Hold DOWN to scroll** on the Hour / Minute screens. `a9dd3cb`; slowed down
-  afterwards to 4 steps/s, then 8 steps/s after 2.5 s held (hour lap ~4.4 s,
-  0→59 minutes ~8.9 s). Speed is tunable via `HOLD_SCROLL_*` in
-  `inc/BuildConfig.h`.
+- **Hold DOWN to scroll** on the Hour / Minute screens: 4 steps/s, then
+  8 steps/s after 2.5 s held (hour lap ~4.4 s, 0→59 minutes ~8.9 s). Releasing
+  adds no extra step; the value is still saved only with S. Speed is tunable
+  via `HOLD_SCROLL_*` in `inc/BuildConfig.h`. `a9dd3cb`, slowed in `47d9a03`
 - DOWN / S / RIGHT accept any 30–800 ms press (was 110–310 ms; quick taps were
   ignored). The ON (power) button is unchanged. `154190e`
 - **Any key (DOWN / S / RIGHT) exits the Info page.** `c11b585`
@@ -47,14 +48,45 @@ or tested on a unit. After flashing, **recalibrate (zero + span)**.
 | Change | Switch in `inc/BuildConfig.h` (set to `0`) | Or revert |
 |---|---|---|
 | Wider click window | `FEATURE_WIDE_CLICK_WINDOW` | `154190e` |
-| Hold to scroll | `FEATURE_HOLD_TO_SCROLL` | `a9dd3cb` |
+| Hold to scroll | `FEATURE_HOLD_TO_SCROLL` | `47d9a03`, then `a9dd3cb` |
 | New footer labels | `FEATURE_NEW_FOOTER_LABELS` | `bcfe6e9` |
 
 To restore this folder exactly as it was before today (other products
 untouched): `git checkout a473a0a -- M30/M30_CH2O_VerK_20260602_beta`
+
+### How it was checked (on a PC, not on the unit)
+- Alarm/PEL/cal-value fix: the changed headers compiled with stand-in hardware
+  libraries; 0.75 ppm and 0.1 ppm setpoints kept and trip correctly.
+- FAULT / CAL? / OVER thresholds against the real CH2O profile and gain.
+- DEV simulator: power-on → zero → span → 30 min field use, 50 random runs,
+  all passed (cal passes, reading within 0.25 ppm + 3 %, alarms and OVER
+  trigger, no false FAULT).
+- Buttons: all four on/off switch combinations; scroll speed steady with a
+  15–45 ms main loop; Run screen never repeats; ON button timing unchanged.
+- Screen text widths measured with the display library's real font; Info
+  screen rendered before/after (before matched the photo of the clipped line).
 
 ### Known open issues
 - A dead/disconnected sensor can **pass span calibration** (voltage drops
   instead of rising); the unit then reads 0.0 and never alarms.
 - DEV mode cannot yet simulate a failed calibration (no `SIM NOGAS`).
 - "PEL" alarm compares the live reading, not an 8-hour TWA.
+- With no sensor connected the input floats at ~305 mV, so a missing sensor
+  shows CAL?, not FAULT. Needs a hardware pull-down or a known clean-air range.
+- Readings use whole millivolts (~0.04 ppm per mV on this profile), so a low
+  span (e.g. 5 ppm) can carry 1–2 % gain error.
+- The other builds (M10, M12, M20, other M30s, M40, M103) still have the
+  EEPROM-persistence and ADC-scaling bugs fixed in June for this build.
+
+### Next time
+1. Flash the final branch in **DEV** mode; run zero → span → `SIM PPM 5`
+   (expect ~5.0), alarm at 0.75 ppm, `SIM PPM 60` (OVER), `SIM FAULT`;
+   power-cycle and confirm the calibration stays.
+2. Try hold-to-scroll and quick taps; if one press ever steps twice, raise the
+   30 ms minimum or set `FEATURE_WIDE_CLICK_WINDOW` to 0.
+3. Flash **PROD** and confirm the Run screen hides the mV and the Info screen
+   fits.
+4. Decide: fix the dead-sensor span pass + add `SIM NOGAS`; PEL rename or
+   real TWA; remaining wording (`ZERO SET`, `RECALIBRATE`, alarm menu titles,
+   `TIMER SLEEP`, `Set User ID`, `Alarm OFF` / `LOG-A`).
+5. Open a PR into `main` once it is verified on the unit.
