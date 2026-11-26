@@ -1,3 +1,20 @@
+/*
+ *  ____ ___ ____       _                _
+ * |  _ \_ _|  _ \     / \   _ __   __ _| |_   _ _______ _ __
+ * | |_) | || | | |   / _ \ | '_ \ / _` | | | | |_  / _ \ '__|
+ * |  __/| || |_| |  / ___ \| | | | (_| | | |_| |/ /  __/ |
+ * |_|  |___|____/  /_/   \_\_| |_|\__,_|_|\__, /___\___|_|
+ *                                         |___/
+ *
+ * M30-EC Gas Detector Firmware
+ *
+ * File        : inc/sensors/EC_LEL_50pct.h
+ * Description : Sensor profile: Catalytic Bead — Combustible (LEL), 0–50 % LEL
+ * Author      : Jason Wang
+ * Version     : see BuildConfig.h, section 4
+ *
+ * Copyright (c) 2026 PID Analyzer. All rights reserved.
+ */
 #pragma once
 // =============================================================================
 // Sensor Profile: Catalytic Bead — Combustible (LEL), 0–50 % LEL

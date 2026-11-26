@@ -1,3 +1,20 @@
+/*
+ *  ____ ___ ____       _                _
+ * |  _ \_ _|  _ \     / \   _ __   __ _| |_   _ _______ _ __
+ * | |_) | || | | |   / _ \ | '_ \ / _` | | | | |_  / _ \ '__|
+ * |  __/| || |_| |  / ___ \| | | | (_| | | |_| |/ /  __/ |
+ * |_|  |___|____/  /_/   \_\_| |_|\__,_|_|\__, /___\___|_|
+ *                                         |___/
+ *
+ * M30-EC Gas Detector Firmware
+ *
+ * File        : inc/sensors/EC_H2S_2000ppm.h
+ * Description : Sensor profile: EC — H2S (Hydrogen Sulfide), 0–2,000 ppm
+ * Author      : Jason Wang
+ * Version     : see BuildConfig.h, section 4
+ *
+ * Copyright (c) 2026 PID Analyzer. All rights reserved.
+ */
 #pragma once
 // =============================================================================
 // Sensor Profile: EC — H2S (Hydrogen Sulfide), 0–2,000 ppm  [SPECIAL RANGE]

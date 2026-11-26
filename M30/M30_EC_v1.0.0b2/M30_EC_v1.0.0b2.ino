@@ -1,3 +1,20 @@
+/*
+ *  ____ ___ ____       _                _
+ * |  _ \_ _|  _ \     / \   _ __   __ _| |_   _ _______ _ __
+ * | |_) | || | | |   / _ \ | '_ \ / _` | | | | |_  / _ \ '__|
+ * |  __/| || |_| |  / ___ \| | | | (_| | | |_| |/ /  __/ |
+ * |_|  |___|____/  /_/   \_\_| |_|\__,_|_|\__, /___\___|_|
+ *                                         |___/
+ *
+ * M30-EC Gas Detector Firmware
+ *
+ * File        : M30_EC_v1.0.0b2.ino
+ * Description : Main sketch: hardware setup, menus, buttons, EEPROM seeding, main loop.
+ * Author      : Jason Wang
+ * Version     : see BuildConfig.h, section 4
+ *
+ * Copyright (c) 2026 PID Analyzer. All rights reserved.
+ */
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_INA219.h> // Include INA219 library
 #include <Adafruit_SHT4x.h>
