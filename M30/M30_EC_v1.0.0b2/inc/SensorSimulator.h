@@ -28,7 +28,7 @@
 
 #include <Arduino.h>
 #include <math.h>
-#include "BuildConfig.h"
+#include "../BuildConfig.h"   // sketch root
 #include "SensorConfig.h"
 
 enum SimScene { SIM_FIELD = 0, SIM_ZERO_AIR = 1, SIM_CAL_GAS = 2 };

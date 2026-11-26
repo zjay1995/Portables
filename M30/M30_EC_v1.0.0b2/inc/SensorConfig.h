@@ -1,9 +1,9 @@
 #pragma once
 // =============================================================================
 // Sensor profile table — DO NOT edit to choose a sensor.
-// Select the sensor with SENSOR_PROFILE in inc/BuildConfig.h.
+// Select the sensor with SENSOR_PROFILE in BuildConfig.h (sketch folder).
 // =============================================================================
-#include "BuildConfig.h"
+#include "../BuildConfig.h"   // sketch root
 
 // --- Profile IDs -------------------------------------------------------------
 // Each ID is stored in EEPROM so the unit can tell when its firmware was built
@@ -32,7 +32,7 @@
 #define EC_SO2_20PPM      21
 
 #ifndef SENSOR_PROFILE
-  #error "Select a sensor: set SENSOR_PROFILE in inc/BuildConfig.h"
+  #error "Select a sensor: set SENSOR_PROFILE in BuildConfig.h (sketch folder)"
 #endif
 
 #if   SENSOR_PROFILE == EC_C2H4_100PPM
@@ -99,7 +99,7 @@
   #include "sensors/EC_SO2_20ppm.h"
   #define SENSOR_PROFILE_NAME "EC_SO2_20PPM"
 #else
-  #error "Unknown SENSOR_PROFILE in inc/BuildConfig.h. Use one of: EC_C2H4_100PPM EC_CH2O_5PPM EC_CH2O_50PPM EC_CH3SH_10PPM EC_CO_300PPM EC_CO_1000PPM EC_CL2_20PPM EC_ETO_100PPM EC_H2S_50PPM EC_H2S_100PPM EC_H2S_2000PPM EC_HCN_100PPM EC_HCL_10PPM EC_HF_10PPM EC_LEL_50PCT EC_NH3_100PPM EC_NO2_20PPM EC_O2_30PCT EC_O3_10PPM EC_PH3_10PPM EC_SO2_20PPM"
+  #error "Unknown SENSOR_PROFILE in BuildConfig.h (sketch folder). Use one of: EC_C2H4_100PPM EC_CH2O_5PPM EC_CH2O_50PPM EC_CH3SH_10PPM EC_CO_300PPM EC_CO_1000PPM EC_CL2_20PPM EC_ETO_100PPM EC_H2S_50PPM EC_H2S_100PPM EC_H2S_2000PPM EC_HCN_100PPM EC_HCL_10PPM EC_HF_10PPM EC_LEL_50PCT EC_NH3_100PPM EC_NO2_20PPM EC_O2_30PCT EC_O3_10PPM EC_PH3_10PPM EC_SO2_20PPM"
 #endif
 
 #define SENSOR_PROFILE_ID  SENSOR_PROFILE

@@ -7,8 +7,8 @@
 //   2. In inc/SensorConfig.h add a NEW profile ID at the END of the ID list
 //      (never reuse or renumber IDs; they are stored in each unit's EEPROM)
 //      and an #elif that includes the new file.
-//   3. Add the name to the list in inc/BuildConfig.h, select it, build.
-//   4. Bump MINOR in inc/Version.h and note it in CHANGELOG.md.
+//   3. Add the name to the list in BuildConfig.h (sketch folder), select it, build.
+//   4. Bump MINOR in BuildConfig.h (section 4) and note it in CHANGELOG.md.
 //
 // Sensor type : [Electrochemical / pellistor / ...]
 // Part number : [manufacturer + part]

@@ -9,7 +9,7 @@
 #include "pins.h"
 #include <Wire.h>
 
-#include "BuildConfig.h"   // FEATURE_* switches
+#include "../BuildConfig.h"   // FEATURE_* switches (sketch root)
 
 class ButtonPressListener
 {

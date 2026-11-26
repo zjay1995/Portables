@@ -2,12 +2,16 @@
 
 Folder `M30/M30_EC_v<version>` — currently `M30/M30_EC_v1.0.0b2` (was
 `M30/M30_EC`, before that `M30/M30_CH2O_VerK_20260602_beta`). Versioning
-rules are at the top of `inc/Version.h`: MAJOR = settings layout changed
+rules are in `BuildConfig.h` (sketch folder), section 4: MAJOR = settings layout changed
 (recalibrate), MINOR = feature / new sensor, PATCH = fix, `-beta.N` = not yet
 verified on hardware.
 
 ## 1.0.0-beta.2 — 2026-11-26
 
+- **All settings in one file next to the `.ino`:** `inc/Version.h` merged
+  into `BuildConfig.h` (section 4, "Firmware version"), and `BuildConfig.h`
+  moved from `inc/` to the sketch folder. No setting changed. Entries below
+  this one still say `inc/BuildConfig.h` / `inc/Version.h` (where they were then).
 - Folder and sketch now carry the version: `M30/M30_EC_v1.0.0b2/
   M30_EC_v1.0.0b2.ino` (was `M30/M30_EC/M30_EC.ino`). Branch renamed to
   `claude/m30-ec-v1.0.0`.

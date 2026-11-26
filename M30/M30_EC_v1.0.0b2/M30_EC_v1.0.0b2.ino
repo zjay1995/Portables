@@ -27,15 +27,14 @@
 #include "inc/image.h"
 #include "inc/LoggingSet.h"
 #include "inc/LoggingTime.h"
-#include "inc/SensorConfig.h"  // sensor profile table (choose the sensor in inc/BuildConfig.h)
-#include "inc/Version.h"       // firmware version
+#include "BuildConfig.h"       // EDIT THIS FILE: sensor, build mode, feature switches, version
+#include "inc/SensorConfig.h"  // sensor profile table (internal)
 
 using namespace std;
 
 #define USE_SSD1306_DISPLAY
 
-// Build mode (PROD / DEV / DEMO) is selected in inc/BuildConfig.h.
-// Version number: inc/Version.h. Sensor + build mode: inc/BuildConfig.h.
+// Sensor, build mode and version number: BuildConfig.h (next to this file).
 // FW_VERSION: full identity for serial / Bluetooth, e.g.
 //   "M30-EC v1.0.0-beta.1 PROD EC_CH2O_50PPM board VerK (2026-11-26)"
 // FW_SHORT / FW_BOOT: sized for the 128 px display.
@@ -574,7 +573,7 @@ void setup() {
   // Sentinel at addr 250 == 0xA8 marks "seeded"; if missing, write safe
   // defaults BEFORE loadFromEEPROM() reads anything.
   // Also reseed when the stored settings layout (251, FW_EEPROM_LAYOUT in
-  // Version.h) or sensor profile (252, SENSOR_PROFILE in BuildConfig.h)
+  // BuildConfig.h) or sensor profile (252, SENSOR_PROFILE in BuildConfig.h)
   // differs from this firmware: old calibration numbers belong to another
   // layout or another sensor and would give wrong readings. Units from before
   // v1.0.0 have 0xFF there, so they reseed once (recalibration required).
