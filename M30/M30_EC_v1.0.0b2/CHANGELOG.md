@@ -8,9 +8,11 @@ verified on hardware.
 
 ## 1.0.0-beta.2 — 2026-11-26
 
-- Every code file starts with a PID Analyzer banner: logo, file, one-line
-  description, author (Jason Wang), copyright. Unused headers (CalManager,
-  Gas, WebServer, MQTT x2) and the stale `pins.h` are marked as such.
+- Every code file starts with a PID Analyzers banner: logo, file, one-line
+  description, author (Jason Wang), copyright.
+- Removed unused headers: `CalManager.h`, `Gas.h`, `WebServer.h`,
+  `MQTTFlashPublisher.h`, `MQTTRealTimePublisher.h`, and `pins.h` (old
+  button-pin macros that disagreed with the real pins in `Globals.cpp`).
 - **All settings in one file next to the `.ino`:** `inc/Version.h` merged
   into `BuildConfig.h` (section 4, "Firmware version"), and `BuildConfig.h`
   moved from `inc/` to the sketch folder. No setting changed. Entries below
