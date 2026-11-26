@@ -61,3 +61,10 @@
 #ifndef FEATURE_HOLD_TO_SCROLL
   #define FEATURE_HOLD_TO_SCROLL  1
 #endif
+
+// Settings-screen footer labels: SKIP (RIGHT key: next screen, unsaved change
+// discarded) · SAVE (S key) · drawn down-arrow (DOWN key: next value).
+// Bump Test shows SKIP · TEST. 0 = original MENU · SET · OPTION.
+#ifndef FEATURE_NEW_FOOTER_LABELS
+  #define FEATURE_NEW_FOOTER_LABELS  1
+#endif

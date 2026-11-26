@@ -17,6 +17,31 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
 
+// --- Settings-screen footer (see FEATURE_NEW_FOOTER_LABELS in BuildConfig.h)
+#if FEATURE_NEW_FOOTER_LABELS
+  #define FOOTER_LEFT         "SKIP"   // RIGHT key: next screen, change not saved
+  #define FOOTER_CENTER       "SAVE"   // S key: save the shown value
+  #define FOOTER_BUMP_CENTER  "TEST"   // S key on Bump Test: run the test
+#else
+  #define FOOTER_LEFT         "MENU"
+  #define FOOTER_CENTER       "SET"
+  #define FOOTER_BUMP_CENTER  "SET"
+#endif
+
+// Right-hand footer slot = DOWN key (step to the next value). The display
+// fonts have no arrow glyph, so the new label is drawn as a filled down-pointing
+// triangle (11 px wide, 6 px tall) at the right edge of the footer row.
+static void drawFooterDownKey(SSD1306Wire* d)
+{
+#if FEATURE_NEW_FOOTER_LABELS
+  for (int row = 0; row < 6; row++)
+    d->drawHorizontalLine(117 + row, 54 + row, 11 - 2 * row);
+#else
+  d->setTextAlignment(TEXT_ALIGN_RIGHT);
+  d->drawString(128, 51, "OPTION");
+#endif
+}
+
 
 
 SSD1306GasMenuRenderer::SSD1306GasMenuRenderer(SSD1306Wire* display) : SSD1306MenuRenderer(display)
@@ -38,11 +63,10 @@ void SSD1306GasMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->setFont(ArialMT_Plain_10);
@@ -347,11 +371,10 @@ void SSD1306RangeMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->setFont(ArialMT_Plain_10);
@@ -379,11 +402,10 @@ void SSD1306AlarmMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -409,11 +431,10 @@ void SSD1306LowalarmMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -439,11 +460,10 @@ void SSD1306HourMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -469,11 +489,10 @@ void SSD1306MinuteMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -501,14 +520,13 @@ void SSD1306CalvalueMenuRenderer::render(Menu* menu)
   m_display->drawString(70, 24 , menu->getName());
   m_display->setFont(ArialMT_Plain_10);
 
-  // Footer: MENU / SET / OPTION
+  // Footer: SKIP / SAVE / down-arrow (FEATURE_NEW_FOOTER_LABELS)
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
@@ -533,11 +551,10 @@ void SSD1306OutportMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -564,11 +581,10 @@ void SSD1306LoggingsetMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -594,11 +610,10 @@ void SSD1306LoggingtimeMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_CENTER);
+  drawFooterDownKey(m_display);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
 
   m_display->display();
@@ -739,14 +754,15 @@ void SSD1306BumpTestMenuRenderer::render(Menu* menu)
   m_display->drawString(64, 27, String("Read: " + String(sensor_val, SENSOR_RES_DIGITS) + " " + SENSOR_UNIT_LABEL).c_str());
   m_display->drawString(64, 37, "Apply cal gas, press S");
 
-  // Footer: MENU / SET / OPTION
+  // Footer: SKIP / TEST (S runs the test; DOWN has no action here)
   m_display->drawLine(0, 49, 128, 49);
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
-  m_display->drawString(0, 51, "MENU");
+  m_display->drawString(0, 51, FOOTER_LEFT);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 51, "SET");
-  m_display->setTextAlignment(TEXT_ALIGN_RIGHT);
-  m_display->drawString(128, 51, "OPTION");
+  m_display->drawString(64, 51, FOOTER_BUMP_CENTER);
+#if !FEATURE_NEW_FOOTER_LABELS
+  drawFooterDownKey(m_display);
+#endif
   m_display->setTextAlignment(TEXT_ALIGN_LEFT);
   m_display->display();
 }
