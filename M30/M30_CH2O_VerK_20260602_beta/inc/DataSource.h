@@ -23,6 +23,16 @@ public:
         return m_analogSourceInput->getMiliVolts();
     }
 
+    // Sensor/ADC fault: the detector reads exactly 0 mV (open circuit, dead
+    // cell, ADC not answering) or sits at the top of the ADC's input range
+    // (railed/saturated input, or a failed I2C read returning all 1s).
+    bool isSensorFault() const
+    {
+        uint16_t mv = m_analogSourceInput->getMiliVolts();
+        const float fullScaleMv = 32767.0f * adsMvPerBit(SENSOR_ADS_GAIN);
+        return mv == 0 || mv >= 0.99f * fullScaleMv;
+    }
+
     uint16_t getRawMiliVolts_battery() const
     {
         return m_analogSourceInput->getMiliVolts_battery();

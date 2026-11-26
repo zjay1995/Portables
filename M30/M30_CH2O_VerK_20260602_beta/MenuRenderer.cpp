@@ -147,11 +147,26 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
     // sensorValue = m_dataSource->getCalibratedValue(0);  // UART (if needed)
   }
 
+  // Reading status, highest priority first. A status replaces the number:
+  //   FAULT - detector reads 0 mV or the ADC input is railed (no valid signal)
+  //   CAL?  - no span calibration stored yet, so the ppm value is meaningless
+  //   OVER  - valid reading above the sensor's over-range limit
+  const bool sensorFault  = m_dataSource->isSensorFault();
+  const bool notCalibrated = !sensorFault && !m_gasManager->isCalibrated();
+  const char* readingStatus = nullptr;
+  if (sensorFault)                          readingStatus = "FAULT";
+  else if (notCalibrated)                   readingStatus = "CAL?";
+  else if (sensorValue > SENSOR_OVERRANGE)  readingStatus = "OVER";
+  // FAULT / CAL? mean the number cannot be trusted, so they must not drive
+  // the gas alarms. OVER is a genuine high reading and still alarms.
+  const bool readingValid = !sensorFault && !notCalibrated;
+
   // Gas name (center top)
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
   m_display->drawString(64, 0, selectedGas.getName());
   m_display->drawLine(0, 14, 128, 14);
-  m_display->drawString(115, 33, SENSOR_UNIT_LABEL);  // Unit from active sensor profile
+  if (readingStatus == nullptr)
+    m_display->drawString(115, 33, SENSOR_UNIT_LABEL);  // Unit from active sensor profile
   // Display the current log number if in manual logging mode
   if (loggingset == 2) {
     int logCount = EEPROM.readUShort(210);
@@ -165,8 +180,8 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   // Check triggers
   // Setpoints are floats so sub-1 ppm limits (e.g. CH2O 0.75 ppm) work; a
   // setpoint of 0 means the alarm is Off.
-  bool triggerHigh = (alarm    > 0.0f && sensorValue > alarm);
-  bool triggerLow  = (lowalarm > 0.0f && sensorValue > lowalarm);
+  bool triggerHigh = readingValid && (alarm    > 0.0f && sensorValue > alarm);
+  bool triggerLow  = readingValid && (lowalarm > 0.0f && sensorValue > lowalarm);
   bool isAlarmActive = triggerHigh || triggerLow;
 
   if (isAlarmActive) {
@@ -197,10 +212,8 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
       }
     } else {
       // PHASE 2: show live reading so user can see the value
-      // Blank to "xxx" only past the sensor's over-range limit, not the
-      // user-selectable output range (which can be far below full scale).
-      if (sensorValue > SENSOR_OVERRANGE) {
-        m_display->drawString(62, 18, "xxx");
+      if (readingStatus) {
+        m_display->drawString(62, 18, readingStatus);
       } else {
         m_display->drawString(62, 18, String(sensorValue, 1));
       }
@@ -213,9 +226,8 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
 
     m_display->setFont(ArialMT_Plain_24);
 
-    // Blank to "xxx" only past the sensor's over-range limit (see above).
-    if (sensorValue > SENSOR_OVERRANGE) {
-      m_display->drawString(62, 18, "xxx");
+    if (readingStatus) {
+      m_display->drawString(62, 18, readingStatus);
     } else {
       m_display->drawString(62, 18, String(sensorValue, 1));
     }

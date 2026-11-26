@@ -121,6 +121,16 @@ public:
         return calSuccess;
     }
 
+    // True once a span calibration has been stored for the selected gas.
+    // First boot seeds the factory placeholder slope (SENSOR_SLOPE, 1.0);
+    // a real span cal always replaces it with a measured value, so a slope
+    // still equal to the placeholder (or 0) means "never calibrated". This
+    // does not depend on the RTC, which may fail to stamp the cal date.
+    bool isCalibrated() const {
+        double s = getSelectedSlope();
+        return s != 0.0 && s != (double)SENSOR_SLOPE;
+    }
+
     double calculateSLM(double voltage) {
         double val = 0;
         // Before the first span calibration the slope is 0; dividing by it
