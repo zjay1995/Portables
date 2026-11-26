@@ -33,7 +33,14 @@ using namespace std;
 
 #define USE_SSD1306_DISPLAY
 
-#define FW_VERSION  "M30 CH2O VerK 06/02/2026"
+// Build mode (PROD / DEV / DEMO) is selected in inc/BuildConfig.h.
+#define FW_VERSION  "M30 CH2O " FW_MODE_NAME " 06/02/2026"
+
+#if BUILD_MODE == BUILD_DEV
+  #warning "DEV build: detector is SIMULATED - not for field use"
+#elif BUILD_MODE == BUILD_DEMO
+  #warning "DEMO build: reading is RANDOM - not for field use"
+#endif
 #define FW_BUILD    (__DATE__ " " __TIME__)
 
 // ALARM_PIN defined in inc/Globals.h
@@ -757,6 +764,11 @@ void listenForCode() {
     if (inChar == '\n') {
       inputString.trim();
 
+#if BUILD_MODE == BUILD_DEV
+      if (simHandleCommand(inputString, Serial)) {
+        // handled by the bench simulator (SIM ...)
+      } else
+#endif
       if (inputString == "PID73*") {
         spillLogContents();
       } else if (inputString == "CLEARLOG") {
@@ -816,6 +828,27 @@ void clearLogFile() {
 }
 
 
+#if BUILD_MODE == BUILD_DEV
+// Tell the simulated sensor what gas the operator would have applied, based on
+// the screen they are on, and print the simulator state every 5 s.
+// Menu index map: 1=Cal Zero 2=Cal Value 3=Cal Gas 12=Bump Test (see setup()).
+static void updateSimulatorScene()
+{
+  SimState& sim = simState();
+  int idx = g_mainMenu->getCurrentIndex();
+  if (idx == 1 || idx == 2)        sim.scene = SIM_ZERO_AIR;   // zero air on until span gas
+  else if (idx == 3 || idx == 12)  sim.scene = SIM_CAL_GAS;
+  else                             sim.scene = SIM_FIELD;
+  sim.calGasPpm = g_calvalue.getSelectedCalvalue();
+
+  static unsigned long lastPrint = 0;
+  if (millis() - lastPrint >= 5000) {
+    lastPrint = millis();
+    Serial.println(simStatusLine());
+  }
+}
+#endif
+
 void loop()
 {
 
@@ -824,6 +857,9 @@ void loop()
   g_sleepTimer.handleTick();
   g_dataLogger.handleTick();
 
+#if BUILD_MODE == BUILD_DEV
+  updateSimulatorScene();
+#endif
   g_mainMenu->render();
   listenForCode();
 

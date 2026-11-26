@@ -27,6 +27,10 @@ inline float adsMvPerBit(adsGain_t gain)
     }
 }
 
+#if BUILD_MODE == BUILD_DEV
+#include "SensorSimulator.h"   // simulated detector for bench testing
+#endif
+
 class AnalogSourceInput
 {
 protected:
@@ -67,6 +71,12 @@ public:
 
         if (now - m_lastReadValueTick > 1000 / m_refreshRate)
         {
+#if BUILD_MODE == BUILD_DEV
+            // DEV build: the detector voltage comes from the simulated cell.
+            m_lastReadValueTick = now;
+            m_lastReadValue = simDetectorMv(now);
+            return m_lastReadValue;
+#endif
             const int numReadings = 4;
             long total = 0;
             m_lastReadValueTick = now;

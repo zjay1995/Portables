@@ -1,4 +1,5 @@
 #pragma once
+#include "BuildConfig.h"   // BUILD_PROD / BUILD_DEV / BUILD_DEMO switch
 //   1. Comment out the currently active profile below.
 //   2. Uncomment the profile that matches your installed sensor.
 //   3. Re-compile and flash.

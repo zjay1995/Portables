@@ -41,6 +41,18 @@ public:
 
     double getDoubleValue()
     {
+#if BUILD_MODE == BUILD_DEMO
+        // DEMO build: no sensor. Random 0.00-0.30 ppm, refreshed ~1 s so the
+        // Run screen looks like a live, slowly changing reading.
+        static unsigned long lastUpdate = 0;
+        static double demoValue = 0.0;
+        unsigned long now = millis();
+        if (lastUpdate == 0 || now - lastUpdate > 1000) {
+            lastUpdate = now;
+            demoValue = random(0, 31) / 100.0;
+        }
+        return demoValue;
+#endif
         uint16_t miliVolts = m_analogSourceInput->getMiliVolts();
         return m_gasManager->calculateSLM(miliVolts / 1000.0);
     }

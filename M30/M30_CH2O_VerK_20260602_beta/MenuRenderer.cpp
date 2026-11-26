@@ -151,8 +151,14 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   //   FAULT - detector reads 0 mV or the ADC input is railed (no valid signal)
   //   CAL?  - no span calibration stored yet, so the ppm value is meaningless
   //   OVER  - valid reading above the sensor's over-range limit
+#if BUILD_MODE == BUILD_DEMO
+  // DEMO: synthetic reading, no sensor or calibration to check.
+  const bool sensorFault   = false;
+  const bool notCalibrated = false;
+#else
   const bool sensorFault  = m_dataSource->isSensorFault();
   const bool notCalibrated = !sensorFault && !m_gasManager->isCalibrated();
+#endif
   const char* readingStatus = nullptr;
   if (sensorFault)                          readingStatus = "FAULT";
   else if (notCalibrated)                   readingStatus = "CAL?";
@@ -163,7 +169,12 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
 
   // Gas name (center top)
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 0, selectedGas.getName());
+  // DEV / DEMO builds are tagged so a non-real reading is never mistaken
+  // for a live measurement.
+  if (BUILD_MODE_TAG[0] != '\0')
+    m_display->drawString(60, 0, selectedGas.getName() + " " + BUILD_MODE_TAG);  // shifted left to clear "B 100%"
+  else
+    m_display->drawString(64, 0, selectedGas.getName());
   m_display->drawLine(0, 14, 128, 14);
   if (readingStatus == nullptr)
     m_display->drawString(115, 33, SENSOR_UNIT_LABEL);  // Unit from active sensor profile
@@ -215,7 +226,7 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
       if (readingStatus) {
         m_display->drawString(62, 18, readingStatus);
       } else {
-        m_display->drawString(62, 18, String(sensorValue, 1));
+        m_display->drawString(62, 18, String(sensorValue, RUN_DISPLAY_DIGITS));
       }
     }
 
@@ -229,7 +240,7 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
     if (readingStatus) {
       m_display->drawString(62, 18, readingStatus);
     } else {
-      m_display->drawString(62, 18, String(sensorValue, 1));
+      m_display->drawString(62, 18, String(sensorValue, RUN_DISPLAY_DIGITS));
     }
   }
   // ---------------------------------------------------------
@@ -237,7 +248,9 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   m_display->setFont(ArialMT_Plain_10);
   // Voltage display
   m_display->drawLine(0, 49, 128, 49);
+#if SHOW_RAW_MV_ON_RUN
   m_display->drawString(70, 51, String(String(m_dataSource->getRawMiliVolts()) + "mV"));
+#endif
 
   // Display alarm status indicators at bottom
   if (alarm != 0 || lowalarm != 0) {
