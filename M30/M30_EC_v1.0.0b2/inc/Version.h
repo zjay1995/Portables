@@ -10,6 +10,11 @@
 //   -beta.N  not yet verified on hardware; drop it (FW_PRERELEASE 0) for a
 //            release, and tag the commit  m30-ec-vMAJOR.MINOR.PATCH.
 // Every version gets a section in CHANGELOG.md.
+// The folder and sketch carry the version too: rename BOTH when bumping
+// (Arduino requires the .ino to match the folder), e.g.
+//   M30/M30_EC_v1.0.0b2/M30_EC_v1.0.0b2.ino   (1.0.0-beta.2)
+//   M30/M30_EC_v1.0.0/M30_EC_v1.0.0.ino       (1.0.0 release)
+// Use  git mv  so history follows the files.
 // =============================================================================
 
 #define FW_PRODUCT        "M30-EC"
