@@ -48,5 +48,24 @@
 #define SENSOR_GAS_NAME         "O2"
 #define SENSOR_RANGE_VALUES     { 25.0f, 30.0f }
 #define SENSOR_CALVALUE_VALUES  { 20.9f }
-#define SENSOR_ALARM_VALUES     { 0.0f, 19.5f, 23.5f }
-#define SENSOR_PEL_VALUES       { 0.0f, 19.5f }
+#define SENSOR_ALARM_VALUES     { 0.0f, 23.5f }          // enrichment (above)
+#define SENSOR_PEL_VALUES       { 0.0f, 19.5f }          // deficiency (below)
+
+// --- Signal & calibration checks (v1.0.0) -----------------------------------
+// Fill the nominal values from the datasheet (nA/ppm x board amplifier gain)
+// or a good bench calibration (Info screen Zero / Sens). SENSOR_TBD keeps the
+// sensitivity check and realistic DEV simulation off for this sensor.
+#define SENSOR_SIGNAL_POLARITY      0    // galvanic O2 cell on this board not confirmed; 0 = no direction check
+#define SENSOR_NOMINAL_ZERO_MV      SENSOR_TBD   // mV in zero gas
+#define SENSOR_NOMINAL_MV_PER_UNIT  SENSOR_TBD   // mV per %
+// O2 zero is done in N2, where the cell may legitimately read ~0 mV.
+#define SENSOR_FAULT_ON_0MV         0
+// Normal air is 20.9 % (DEV simulator background, DEMO range).
+#define SENSOR_AMBIENT_VALUE        20.9f
+// Alarms: "High" = enrichment (reading ABOVE setpoint), "Low" = deficiency
+// (reading BELOW setpoint). Previously both lists alarmed only when the
+// reading went above, so 19.5 % alarmed in normal air and never on low O2.
+#define SENSOR_ALARM_TITLE          "Alarm : High"
+#define SENSOR_ALARM_FALLING        0
+#define SENSOR_PEL_TITLE            "Alarm : Low"
+#define SENSOR_PEL_FALLING          1

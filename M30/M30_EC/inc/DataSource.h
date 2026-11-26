@@ -28,9 +28,7 @@ public:
     // (railed/saturated input, or a failed I2C read returning all 1s).
     bool isSensorFault() const
     {
-        uint16_t mv = m_analogSourceInput->getMiliVolts();
-        const float fullScaleMv = 32767.0f * adsMvPerBit(SENSOR_ADS_GAIN);
-        return mv == 0 || mv >= 0.99f * fullScaleMv;
+        return adsMvIsFault(m_analogSourceInput->getMiliVolts());
     }
 
     uint16_t getRawMiliVolts_battery() const
@@ -42,14 +40,20 @@ public:
     double getDoubleValue()
     {
 #if BUILD_MODE == BUILD_DEMO
-        // DEMO build: no sensor. Random 0.00-0.30 ppm, refreshed ~1 s so the
+        // DEMO build: no sensor. Random value in the profile's demo range
+        // (SENSOR_DEMO_MIN..MAX, CH2O 50 ppm: 0.00-0.30), refreshed ~1 s so the
         // Run screen looks like a live, slowly changing reading.
         static unsigned long lastUpdate = 0;
         static double demoValue = 0.0;
         unsigned long now = millis();
         if (lastUpdate == 0 || now - lastUpdate > 1000) {
             lastUpdate = now;
-            demoValue = random(0, 31) / 100.0;
+            const double lo = SENSOR_DEMO_MIN;
+            const double step = pow(10.0, -SENSOR_RES_DIGITS);   // display resolution
+            double hi = SENSOR_DEMO_MAX;
+            if (hi < lo + 3 * step) hi = lo + 3 * step;          // always visibly change
+            long steps = (long)floor((hi - lo) / step + 1e-6);   // never exceed hi
+            demoValue = lo + random(0, steps + 1) * step;
         }
         return demoValue;
 #endif

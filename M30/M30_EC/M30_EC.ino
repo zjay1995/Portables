@@ -27,16 +27,22 @@
 #include "inc/image.h"
 #include "inc/LoggingSet.h"
 #include "inc/LoggingTime.h"
-#include "inc/SensorConfig.h"  // active sensor profile — swap sensors here
+#include "inc/SensorConfig.h"  // sensor profile table (choose the sensor in inc/BuildConfig.h)
+#include "inc/Version.h"       // firmware version
 
 using namespace std;
 
 #define USE_SSD1306_DISPLAY
 
 // Build mode (PROD / DEV / DEMO) is selected in inc/BuildConfig.h.
-#define FW_DATE     "06/02/2026"
-#define FW_VERSION  "M30 CH2O " FW_MODE_NAME " " FW_DATE   // full string (serial / Bluetooth)
-#define FW_SHORT    FW_MODE_NAME " " FW_DATE                // fits the 128 px display
+// Version number: inc/Version.h. Sensor + build mode: inc/BuildConfig.h.
+// FW_VERSION: full identity for serial / Bluetooth, e.g.
+//   "M30-EC v1.0.0-beta.1 PROD EC_CH2O_50PPM board VerK (2026-11-26)"
+// FW_SHORT / FW_BOOT: sized for the 128 px display.
+#define FW_VERSION  FW_PRODUCT " v" FW_VERSION_TEXT " " FW_MODE_NAME " " SENSOR_PROFILE_NAME \
+                    " board " FW_BOARD " (" FW_RELEASE_DATE ")"
+#define FW_SHORT    "v" FW_VERSION_SHORT " " FW_MODE_NAME             // Info: "FW: v1.0.0-b1 PROD"
+#define FW_BOOT     FW_PRODUCT " v" FW_VERSION_SHORT " " FW_MODE_NAME // boot: "M30-EC v1.0.0-b1 PROD"
 
 #if BUILD_MODE == BUILD_DEV
   #warning "DEV build: detector is SIMULATED - not for field use"
@@ -294,7 +300,7 @@ void setup() {
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_CENTER);
     display.drawString(64,  0, "SYSTEM CHECK");
-    display.drawString(64, 10, "M30 " FW_SHORT);   // full FW_VERSION is 134 px, too wide
+    display.drawString(64, 10, FW_BOOT);   // full FW_VERSION is too wide for the display
     display.drawLine(0, 21, 128, 21);
 
     // Helper: label at left, result at right
@@ -567,8 +573,18 @@ void setup() {
   // a signaling NaN; String(NaN, 10) overflows dtostrf → boot loop.
   // Sentinel at addr 250 == 0xA8 marks "seeded"; if missing, write safe
   // defaults BEFORE loadFromEEPROM() reads anything.
-  if (EEPROM.read(250) != 0xA8) {
-    Serial.println("Blank EEPROM detected — seeding defaults from sensor profile");
+  // Also reseed when the stored settings layout (251, FW_EEPROM_LAYOUT in
+  // Version.h) or sensor profile (252, SENSOR_PROFILE in BuildConfig.h)
+  // differs from this firmware: old calibration numbers belong to another
+  // layout or another sensor and would give wrong readings. Units from before
+  // v1.0.0 have 0xFF there, so they reseed once (recalibration required).
+  const uint8_t EE_ADDR_SEEDED = 250, EE_ADDR_LAYOUT = 251, EE_ADDR_PROFILE = 252;
+  const char* reseedReason = nullptr;
+  if (EEPROM.read(EE_ADDR_SEEDED) != 0xA8)                        reseedReason = "blank EEPROM";
+  else if (EEPROM.read(EE_ADDR_LAYOUT) != FW_EEPROM_LAYOUT)       reseedReason = "settings layout changed";
+  else if (EEPROM.read(EE_ADDR_PROFILE) != SENSOR_PROFILE_ID)     reseedReason = "different sensor profile";
+  if (reseedReason) {
+    Serial.println(String("Seeding defaults from sensor profile (") + reseedReason + ")");
     EEPROM.writeDouble(8,  SENSOR_INTERCEPT);
     EEPROM.writeDouble(16, SENSOR_SLOPE);
     EEPROM.writeDouble(24, SENSOR_INTERCEPT2);
@@ -585,7 +601,9 @@ void setup() {
     EEPROM.write(96,    0);   // logging set (Off)
     EEPROM.write(200,   0);   // logging time
     EEPROM.writeString(120, "not calibrated");
-    EEPROM.write(250,   0xA8);
+    EEPROM.write(EE_ADDR_SEEDED,  0xA8);
+    EEPROM.write(EE_ADDR_LAYOUT,  FW_EEPROM_LAYOUT);
+    EEPROM.write(EE_ADDR_PROFILE, SENSOR_PROFILE_ID);
     EEPROM.commit();
   }
 
@@ -684,14 +702,17 @@ void setupButtons()
     //  0=Run 1=CalZero 2=Calvalue 3=CalGas 4=CalRes
     //  5=Alarm 6=LowAlarm 7=LoggingSet 8=LoggingTime
     //  9=Hour 10=Minute 11=Range 12=BumpTest 13=Info
-    if (idx == 1)                    showSavedBanner("ZERO SET");   // Cal Zero (in full flow)
+    if (idx == 1) {                                                  // Cal Zero (in full flow)
+      if (g_gasManager.wasZeroSuccessful()) showSavedBanner("ZERO SET");
+      else showSavedBanner("ZERO FAILED", g_gasManager.getZeroFailReason());
+    }
     else if (idx == 3) {
       // Report the real span result (it used to say CAL COMPLETE even when
       // the span was rejected and the old calibration was kept).
       if (g_gasManager.wasCalibrationSuccessful())
         showSavedBanner("CAL PASSED");
       else
-        showSavedBanner("CAL FAILED", "Check gas & sensor");
+        showSavedBanner("CAL FAILED", g_gasManager.getCalFailReason());
       g_mainMenu->setCurrentMenu(0);   // Return to Run after span
       syncTimeFromRTC();
       return;

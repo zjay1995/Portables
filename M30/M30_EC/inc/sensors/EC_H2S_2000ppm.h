@@ -33,3 +33,11 @@
 #define SENSOR_CALVALUE_VALUES  { 50.0f, 100.0f, 500.0f, 1000.0f, 2000.0f }
 #define SENSOR_ALARM_VALUES     { 0.0f, 50.0f, 100.0f, 500.0f, 1000.0f }   // first = Off
 #define SENSOR_PEL_VALUES       { 0.0f, 10.0f, 20.0f, 50.0f, 100.0f }      // first = Off
+
+// --- Signal & calibration checks (v1.0.0) -----------------------------------
+// Fill the nominal values from the datasheet (nA/ppm x board amplifier gain)
+// or a good bench calibration (Info screen Zero / Sens). SENSOR_TBD keeps the
+// sensitivity check and realistic DEV simulation off for this sensor.
+#define SENSOR_SIGNAL_POLARITY      +1   // reducing gas: output rises, as CH2O does on this board (verify)
+#define SENSOR_NOMINAL_ZERO_MV      SENSOR_TBD   // mV in zero gas
+#define SENSOR_NOMINAL_MV_PER_UNIT  SENSOR_TBD   // mV per ppm

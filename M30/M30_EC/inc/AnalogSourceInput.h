@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Arduino.h>          // millis(); don't rely on the Adafruit headers for it
 #include <Adafruit_ADS1015.h>
 #include <Adafruit_INA219.h>
 #include <Adafruit_SHT4x.h>
@@ -25,6 +26,30 @@ inline float adsMvPerBit(adsGain_t gain)
         case GAIN_SIXTEEN:   return 0.0078125F; // +/-0.256 V
         default:             return 0.125F;
     }
+}
+
+// Compile-time twin of adsMvPerBit() (C++11 constexpr: single expression).
+constexpr float adsMvPerBitConst(adsGain_t gain)
+{
+    return gain == GAIN_TWOTHIRDS ? 0.1875F : gain == GAIN_ONE   ? 0.125F   :
+           gain == GAIN_TWO       ? 0.0625F : gain == GAIN_FOUR  ? 0.03125F :
+           gain == GAIN_EIGHT     ? 0.015625F : gain == GAIN_SIXTEEN ? 0.0078125F : 0.125F;
+}
+// Once a profile's nominal zero and sensitivity are filled in, check that the
+// detector output at over-range stays inside the ADC range at its gain.
+static_assert(!(SENSOR_NOMINAL_ZERO_MV > 0 && SENSOR_NOMINAL_MV_PER_UNIT > 0) ||
+              (SENSOR_NOMINAL_ZERO_MV + SENSOR_SIGNAL_POLARITY * SENSOR_OVERRANGE * SENSOR_NOMINAL_MV_PER_UNIT
+                   < 0.95f * 32767.0f * adsMvPerBitConst(SENSOR_ADS_GAIN) &&
+               SENSOR_NOMINAL_ZERO_MV + SENSOR_SIGNAL_POLARITY * SENSOR_OVERRANGE * SENSOR_NOMINAL_MV_PER_UNIT > 0.0f),
+              "Sensor profile: output at over-range does not fit the ADC range at SENSOR_ADS_GAIN - pick a lower gain");
+
+// Detector fault: input railed at the top of the ADC range (or a failed I2C
+// read returning all 1s), or exactly 0 mV on profiles where the biased front
+// end never legitimately reaches 0 V (SENSOR_FAULT_ON_0MV).
+inline bool adsMvIsFault(uint16_t mv)
+{
+    const float fullScaleMv = 32767.0f * adsMvPerBit(SENSOR_ADS_GAIN);
+    return (SENSOR_FAULT_ON_0MV && mv == 0) || mv >= 0.99f * fullScaleMv;
 }
 
 #if BUILD_MODE == BUILD_DEV

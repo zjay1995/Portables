@@ -20,6 +20,8 @@
 //   SIM AUTO      back to the automatic field profile (default)
 //   SIM PPM <x>   hold a fixed concentration of <x> ppm in the field
 //   SIM FAULT     detector reads 0 mV (dead / disconnected cell)
+//   SIM NOGAS     cal gas not applied: Cal Gas / Bump Test see clean air
+//   SIM GAS       cal gas applied again (default)
 //   SIM OK        clear SIM FAULT
 //   SIM STATUS    print the simulator state
 // =============================================================================
@@ -36,6 +38,7 @@ struct SimState {
     float calGasPpm;          // selected cal-gas value (for SIM_CAL_GAS)
     float holdPpm;            // >= 0: SIM PPM override in the field
     bool  forceFault;         // SIM FAULT
+    bool  noCalGas;           // SIM NOGAS
     float ppm;                // concentration currently "seen" by the cell
     unsigned long lastMs;
     // field-profile event state
@@ -44,8 +47,8 @@ struct SimState {
     float eventPeakPpm;
     bool  inEvent;
 
-    SimState() : scene(SIM_FIELD), calGasPpm(0), holdPpm(-1), forceFault(false),
-                 ppm(0), lastMs(0), nextEventMs(45000UL), eventEndMs(0),
+    SimState() : scene(SIM_FIELD), calGasPpm(0), holdPpm(-1), forceFault(false), noCalGas(false),
+                 ppm(SENSOR_AMBIENT_VALUE), lastMs(0), nextEventMs(45000UL), eventEndMs(0),
                  eventPeakPpm(0), inEvent(false) {}
 };
 
@@ -54,10 +57,26 @@ inline SimState& simState() { static SimState s; return s; }
 
 // --- Modelled cell (scaled to the active sensor profile) ---------------------
 inline float simFullScaleMv()  { return 32767.0f * adsMvPerBit(SENSOR_ADS_GAIN); }
-inline float simZeroMv()       { return 0.15f * simFullScaleMv(); }   // ~307 mV at GAIN_TWO
-// Over-range concentration lands at 80% of the ADC range.
-inline float simMvPerPpm()     { return (0.80f * simFullScaleMv() - simZeroMv()) / SENSOR_OVERRANGE; }
-inline float simBackgroundPpm(){ return 0.0006f * SENSOR_RANGE_FS; }  // 0.03 ppm on a 50 ppm cell
+// Uses the profile's nominal zero / sensitivity when known; otherwise a
+// stand-in cell scaled to the ADC range: zero at 15% (85% for a falling
+// output) and over-range at 80% (20%) of full scale.
+inline int   simPolarity()     { return SENSOR_SIGNAL_POLARITY < 0 ? -1 : 1; }  // 0 -> rising
+inline float simZeroMv()
+{
+    if (SENSOR_NOMINAL_ZERO_MV > 0) return SENSOR_NOMINAL_ZERO_MV;
+    return (simPolarity() > 0 ? 0.15f : 0.85f) * simFullScaleMv();          // ~307 mV at GAIN_TWO
+}
+inline float simMvPerPpm()     // magnitude; direction from simPolarity()
+{
+    if (SENSOR_NOMINAL_MV_PER_UNIT > 0) return SENSOR_NOMINAL_MV_PER_UNIT;
+    return 0.65f * simFullScaleMv() / SENSOR_OVERRANGE;
+}
+// Clean-air reading: the profile's ambient value (O2 20.9 %) or a trace.
+inline float simBackgroundPpm()
+{
+    return SENSOR_AMBIENT_VALUE > 0 ? SENSOR_AMBIENT_VALUE
+                                    : 0.0006f * SENSOR_RANGE_FS;            // 0.03 ppm on a 50 ppm cell
+}
 static const float SIM_TAU_S = 15.0f;                                 // T90 ~ 2.3 tau
 
 inline float simRandUnit() { return random(0, 10001) / 10000.0f; }   // 0..1
@@ -68,7 +87,9 @@ inline float simFieldTargetPpm(SimState& s, unsigned long now)
     if (!s.inEvent && now >= s.nextEventMs) {
         s.inEvent = true;
         s.eventEndMs = now + 40000UL;                          // hold the exposure ~40 s
-        if (random(0, 6) == 0)
+        if (SENSOR_AMBIENT_VALUE > 0)                          // O2: deficiency dip to
+            s.eventPeakPpm = SENSOR_AMBIENT_VALUE * (0.80f + 0.17f * simRandUnit()); // 80-97% of air
+        else if (random(0, 6) == 0)
             s.eventPeakPpm = 1.2f * SENSOR_OVERRANGE;          // big leak -> OVER
         else                                                   // 0.5%..6% of range
             s.eventPeakPpm = SENSOR_RANGE_FS * (0.005f + 0.055f * simRandUnit());
@@ -89,7 +110,7 @@ inline uint16_t simDetectorMv(unsigned long now)
     float target;
     switch (s.scene) {
         case SIM_ZERO_AIR: target = 0.0f;        break;
-        case SIM_CAL_GAS:  target = s.calGasPpm; break;
+        case SIM_CAL_GAS:  target = s.noCalGas ? simBackgroundPpm() : s.calGasPpm; break;
         default:           target = simFieldTargetPpm(s, now); break;
     }
 
@@ -99,7 +120,7 @@ inline uint16_t simDetectorMv(unsigned long now)
 
     float drift = 2.0f * sinf(2.0f * (float)M_PI * now / 600000.0f); // +/-2 mV, 10 min
     float noise = (simRandUnit() - 0.5f) * 1.2f;                     // +/-0.6 mV
-    float mv = simZeroMv() + drift + noise + s.ppm * simMvPerPpm();
+    float mv = simZeroMv() + drift + noise + simPolarity() * s.ppm * simMvPerPpm();
     float fs = simFullScaleMv();
     if (mv < 0) mv = 0;
     if (mv > fs) mv = fs;                                            // ADC saturates
@@ -119,9 +140,10 @@ inline String simStatusLine()
 {
     SimState& s = simState();
     String mode = s.forceFault ? "FAULT" : (s.holdPpm >= 0 ? "HOLD " + String(s.holdPpm, 2) : "AUTO");
+    if (s.noCalGas) mode = mode + "+NOGAS";
     return "[SIM] scene=" + String(simSceneName(s.scene)) + " mode=" + mode +
            " ppm=" + String(s.ppm, 3) + " zero=" + String(simZeroMv(), 0) + "mV" +
-           " sens=" + String(simMvPerPpm(), 2) + "mV/ppm";
+           " sens=" + String(simPolarity() * simMvPerPpm(), 2) + "mV/" + SENSOR_UNIT_LABEL;
 }
 
 // Handles a "SIM ..." command line. Returns true if it was a SIM command.
@@ -131,15 +153,17 @@ inline bool simHandleCommand(String cmd, Print& out)
     cmd.toUpperCase();
     if (!cmd.startsWith("SIM")) return false;
     SimState& s = simState();
-    if (cmd == "SIM AUTO")        { s.holdPpm = -1; s.forceFault = false; }
+    if (cmd == "SIM AUTO")        { s.holdPpm = -1; s.forceFault = false; s.noCalGas = false; }
     else if (cmd == "SIM FAULT")  { s.forceFault = true; }
     else if (cmd == "SIM OK")     { s.forceFault = false; }
+    else if (cmd == "SIM NOGAS")  { s.noCalGas = true; }
+    else if (cmd == "SIM GAS")    { s.noCalGas = false; }
     else if (cmd.startsWith("SIM PPM ")) {
         float v = cmd.substring(8).toFloat();
         if (v >= 0) s.holdPpm = v;
     }
     else if (cmd != "SIM STATUS") {
-        out.println("SIM commands: AUTO | PPM <x> | FAULT | OK | STATUS");
+        out.println("SIM commands: AUTO | PPM <x> | FAULT | OK | NOGAS | GAS | STATUS");
         return true;
     }
     out.println(simStatusLine());

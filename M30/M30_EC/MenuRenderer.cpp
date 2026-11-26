@@ -193,8 +193,9 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
 
   // Gas name (center top)
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  // DEV / DEMO builds are tagged so a non-real reading is never mistaken
-  // for a live measurement.
+  // DEV builds are tagged "<gas> SIM" here (widest, "CH3SH SIM", is 55 px and
+  // fits between the clock and "B 100%"); DEMO is tagged in the footer.
+  // Either way a non-real reading is never mistaken for a live measurement.
   if (BUILD_MODE_TAG[0] != '\0')
     m_display->drawString(60, 0, selectedGas.getName() + " " + BUILD_MODE_TAG);  // shifted left to clear "B 100%"
   else
@@ -215,8 +216,12 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   // Check triggers
   // Setpoints are floats so sub-1 ppm limits (e.g. CH2O 0.75 ppm) work; a
   // setpoint of 0 means the alarm is Off.
-  bool triggerHigh = readingValid && (alarm    > 0.0f && sensorValue > alarm);
-  bool triggerLow  = readingValid && (lowalarm > 0.0f && sensorValue > lowalarm);
+  // Direction comes from the sensor profile: most gases alarm ABOVE the
+  // setpoint; O2 deficiency alarms BELOW it (SENSOR_*_FALLING).
+  bool triggerHigh = readingValid && alarm > 0.0f &&
+                     (SENSOR_ALARM_FALLING ? sensorValue < alarm : sensorValue > alarm);
+  bool triggerLow  = readingValid && lowalarm > 0.0f &&
+                     (SENSOR_PEL_FALLING ? sensorValue < lowalarm : sensorValue > lowalarm);
   bool isAlarmActive = triggerHigh || triggerLow;
 
   if (isAlarmActive) {
@@ -250,7 +255,7 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
       if (readingStatus) {
         m_display->drawString(62, 18, readingStatus);
       } else {
-        m_display->drawString(62, 18, String(sensorValue, RUN_DISPLAY_DIGITS));
+        m_display->drawString(62, 18, String(sensorValue, SENSOR_RES_DIGITS));
       }
     }
 
@@ -264,7 +269,7 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
     if (readingStatus) {
       m_display->drawString(62, 18, readingStatus);
     } else {
-      m_display->drawString(62, 18, String(sensorValue, RUN_DISPLAY_DIGITS));
+      m_display->drawString(62, 18, String(sensorValue, SENSOR_RES_DIGITS));
     }
   }
   // ---------------------------------------------------------
@@ -274,6 +279,8 @@ void SSD1306RunMenuRenderer::render(Menu* menu)
   m_display->drawLine(0, 49, 128, 49);
 #if SHOW_RAW_MV_ON_RUN
   m_display->drawString(70, 51, String(String(m_dataSource->getRawMiliVolts()) + "mV"));
+#elif defined(BUILD_FOOTER_TAG)
+  m_display->drawString(70, 51, BUILD_FOOTER_TAG);   // DEMO marker
 #endif
 
   // Display alarm status indicators at bottom
@@ -395,7 +402,7 @@ void SSD1306AlarmMenuRenderer::render(Menu* menu)
   m_display->clear();
   m_display->setColor(WHITE);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 0, "Alarm : High");
+  m_display->drawString(64, 0, SENSOR_ALARM_TITLE);  // from sensor profile
   m_display->drawLine(0, 16, 256, 16);
   m_display->setFont(ArialMT_Plain_16);
   m_display->drawString(60, 24 , menu->getName());
@@ -424,7 +431,7 @@ void SSD1306LowalarmMenuRenderer::render(Menu* menu)
   m_display->clear();
   m_display->setColor(WHITE);
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
-  m_display->drawString(64, 0, "Alarm : PEL");
+  m_display->drawString(64, 0, SENSOR_PEL_TITLE);    // from sensor profile
   m_display->drawLine(0, 16, 256, 16);
   m_display->setFont(ArialMT_Plain_16);
   m_display->drawString(60, 24 , menu->getName());
@@ -796,7 +803,8 @@ void SSD1306CalResMenuRenderer::render(Menu* menu)
   } else {
     // A failed span keeps the previous calibration; tell the operator what
     // to check instead of showing the (old) cal date.
-    m_display->drawString(64, 36, "Check gas & sensor");
+    const char* reason = m_gasManager->getCalFailReason();
+    m_display->drawString(64, 36, (reason && reason[0]) ? reason : "Check gas & sensor");
   }
 
   m_display->drawString(64, 52, "OK");

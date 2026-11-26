@@ -56,6 +56,9 @@ class GasManager : public ParamChangeListener
     double m_calgas;
 
     bool calSuccess = false;
+    bool zeroSuccess = false;
+    const char* calFailReason  = "";   // short, shown under CAL FAILED
+    const char* zeroFailReason = "";   // short, shown under ZERO FAILED
 
     ConfigurationManager* m_configurationManager;
 
@@ -120,6 +123,9 @@ public:
     bool wasCalibrationSuccessful() const {
         return calSuccess;
     }
+    bool wasZeroSuccessful() const { return zeroSuccess; }
+    const char* getCalFailReason()  const { return calFailReason; }
+    const char* getZeroFailReason() const { return zeroFailReason; }
 
     // True once a span calibration has been stored for the selected gas.
     // First boot seeds the factory placeholder slope (SENSOR_SLOPE, 1.0);
@@ -187,6 +193,16 @@ public:
     }
 
     void calibrate(double zero){
+        // Reject a zero taken while the detector is faulted (dead/disconnected
+        // cell, railed input): keep the previous zero instead of storing junk.
+        zeroSuccess = false;
+        if (adsMvIsFault((uint16_t)zero)) {
+            zeroFailReason = "Sensor fault";
+            Serial.println("Zero rejected: detector fault (" + String(zero, 0) + " mV) — zero not saved.");
+            return;
+        }
+        zeroSuccess = true;
+        zeroFailReason = "";
         m_zero = zero/1000;
         delay(20);
         if(m_selectedGas==0) {
@@ -231,11 +247,33 @@ public:
         Serial.println(calvalue, 3);
         Serial.println(calgasv, 6);
 
+        calFailReason = "";
+
+        // Zero baseline = the STORED zero (intercept). Using it instead of a
+        // zero read earlier this power-up means a span done without a fresh
+        // zero (Cal Zero skipped) is still measured against the real zero.
+        m_zero = getSelectedIntercept();
+        const double deltaV = m_calgas - m_zero;
+
         if (!(calvalue > 0.0f)) {
+            calFailReason = "No cal gas value";
             Serial.println("Span rejected: cal gas concentration is not > 0 — slope not saved.");
             return;
         }
-
+        // Dead/disconnected cell or railed input: never accept as a span (a 0 mV
+        // span used to "pass" with a reversed slope and then read 0 forever).
+        if (adsMvIsFault((uint16_t)cal)) {
+            calFailReason = "Sensor fault";
+            Serial.println("Span rejected: detector fault (" + String(cal, 0) + " mV) — slope not saved.");
+            return;
+        }
+        // Biased front ends never zero at 0 V: an intercept of 0 is the factory
+        // placeholder, i.e. no zero calibration was ever stored.
+        if (SENSOR_FAULT_ON_0MV && m_zero <= 0.0) {
+            calFailReason = "Do Cal Zero first";
+            Serial.println("Span rejected: no zero calibration stored — slope not saved.");
+            return;
+        }
         // Span-rejection guard: a span/zero voltage delta that is too small to
         // produce a reliable slope (disconnected/dead sensor, or no cal gas
         // applied) is rejected without writing slope or cal date, so the run
@@ -245,34 +283,58 @@ public:
         // gain's LSB so the true-voltage rejection threshold is unchanged
         // (e.g. 10 mV at GAIN_TWO, 5 mV at GAIN_FOUR).
         const double minSpanV = 0.020 * (adsMvPerBit(SENSOR_ADS_GAIN) / 0.125);
-        if (fabs(m_calgas - m_zero) < minSpanV) {
+        if (fabs(deltaV) < minSpanV) {
+            calFailReason = "Check gas & sensor";   // no / too little gas
             Serial.println("Span rejected: |V_cal - V_zero| below min span — slope not saved.");
             return;
         }
+        // Output must move the way this sensor responds to gas. Checked after
+        // the minimum-span test so 'no gas applied' (tiny, noisy change) reports
+        // 'Check gas & sensor', not 'Wrong direction'.
+        if (SENSOR_SIGNAL_POLARITY != 0 && deltaV * SENSOR_SIGNAL_POLARITY <= 0) {
+            calFailReason = "Wrong direction";
+            Serial.println("Span rejected: output moved " + String(deltaV * 1000, 1) +
+                           " mV, expected " + String(SENSOR_SIGNAL_POLARITY > 0 ? "a rise" : "a fall") +
+                           " — slope not saved.");
+            return;
+        }
+
+        // Measured sensitivity (mV per unit) vs the profile's nominal, when known:
+        // far below = aged/poisoned cell or not enough gas; far above = wrong gas.
+        if (SENSOR_NOMINAL_MV_PER_UNIT > 0) {
+            const double measured = fabs(deltaV / calgasv);           // mV per unit
+            const double ratio = measured / SENSOR_NOMINAL_MV_PER_UNIT;
+            if (ratio < SENSOR_SENS_MIN_RATIO || ratio > SENSOR_SENS_MAX_RATIO) {
+                calFailReason = ratio < SENSOR_SENS_MIN_RATIO ? "Sensitivity too low" : "Sensitivity too high";
+                Serial.println("Span rejected: sensitivity " + String(measured, 2) + " mV/unit is " +
+                               String(ratio * 100, 0) + "% of nominal — slope not saved.");
+                return;
+            }
+        }
 
         if (m_selectedGas == 0) {
-            m_slope = (m_calgas - m_zero) / calgasv;
+            m_slope = deltaV / calgasv;
             Serial.println("calibrating for gas 1");
             EEPROM.put(16 + m_selectedGas * 16, m_slope);
             EEPROM.commit();
             calSuccess = true;
             Serial.print("Factors Saved to EEPROM: "); Serial.println(m_slope);
         } else if (m_selectedGas == 1) {
-            m_slope2 = (m_calgas - m_zero) / calgasv;
+            m_slope2 = deltaV / calgasv;
             Serial.println("calibrating for gas 2");
             EEPROM.put(16 + m_selectedGas * 16, m_slope2);
             EEPROM.commit();
             calSuccess = true;
             Serial.print("Factors Saved to EEPROM: "); Serial.println(m_slope2);
         } else if (m_selectedGas == 2) {
-            m_slope3 = (m_calgas - m_zero) / calgasv;
+            m_slope3 = deltaV / calgasv;
             Serial.println("calibrating for gas 3");
             EEPROM.put(16 + m_selectedGas * 16, m_slope3);
             EEPROM.commit();
             calSuccess = true;
             Serial.print("Factors Saved to EEPROM: "); Serial.println(m_slope3);
         } else if (m_selectedGas == 3) {
-            m_slope4 = (m_calgas - m_zero) / calgasv;
+            m_slope4 = deltaV / calgasv;
             Serial.println("calibrating for gas 4");
             EEPROM.put(16 + m_selectedGas * 16, m_slope4);
             EEPROM.commit();
