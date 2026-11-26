@@ -633,8 +633,8 @@ void SSD1306CalStartMenuRenderer::render(Menu* menu)
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
   m_display->drawString(64, 0, "Calibration");
   m_display->drawLine(10, 16, 256, 16);
-  m_display->drawString(64, 24, "<DOWN>: Start");
-  m_display->drawString(64, 36, "<UP>: Finish");
+  m_display->drawString(64, 24, "DOWN: Start Cal");
+  m_display->drawString(64, 36, "UP: Exit");
   m_display->display();
 }
 
@@ -661,7 +661,7 @@ void SSD1306ZEROMenuRenderer::render(Menu* menu)
   m_display->drawLine(0, 14, 128, 14);
   m_display->drawString(64, 17, "Place ZeroGas on Probe");
   m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
-  m_display->drawString(64, 37, "Press S when Stable");
+  m_display->drawString(64, 37, "Wait for stable, press S");
 
   // Footer: SKIP / S  (OPTION removed — no action on these pages)
   m_display->drawLine(0, 49, 128, 49);
@@ -690,7 +690,7 @@ void SSD1306CalGasMenuRenderer::render(Menu* menu)
   m_display->drawLine(0, 14, 128, 14);
   m_display->drawString(64, 17, String("Cal gas: " + String(calvalue, SENSOR_RES_DIGITS) + " " + SENSOR_UNIT_LABEL).c_str());
   m_display->drawString(64, 27, String("Det: " + String(m_dataSource->getRawMiliVolts()) + "mV").c_str());
-  m_display->drawString(64, 37, "Press S when Stable");
+  m_display->drawString(64, 37, "Wait for stable, press S");
 
   // Footer: SKIP / S  (OPTION removed — no action on these pages)
   m_display->drawLine(0, 49, 128, 49);
@@ -752,19 +752,22 @@ void SSD1306CalResMenuRenderer::render(Menu* menu)
   m_display->setTextAlignment(TEXT_ALIGN_CENTER);
   m_display->drawString(64, 0, "Calibration - Result");
   m_display->drawLine(0, 16, 256, 16);
+  const bool calPassed = m_gasManager->wasCalibrationSuccessful();
   m_display->setFont(ArialMT_Plain_16);
-  if (m_gasManager->wasCalibrationSuccessful()) {
-    m_display->drawString(64, 18, "Success");
-  } else {
-    m_display->drawString(64, 18, "Failed");
-  }
+  m_display->drawString(64, 18, calPassed ? "CAL PASSED" : "CAL FAILED");
   m_display->setFont(ArialMT_Plain_10);
 
-  // Read and display calibration date/time from EEPROM
-  char calDateStr[32] = { 0 };
-  EEPROM.readString(120, calDateStr, 31);
-  if (calDateStr[0] != '\0') {
-    m_display->drawString(64, 36, "Cal: " + String(calDateStr));
+  if (calPassed) {
+    // Read and display calibration date/time from EEPROM
+    char calDateStr[32] = { 0 };
+    EEPROM.readString(120, calDateStr, 31);
+    if (calDateStr[0] != '\0') {
+      m_display->drawString(64, 36, "Cal: " + String(calDateStr));
+    }
+  } else {
+    // A failed span keeps the previous calibration; tell the operator what
+    // to check instead of showing the (old) cal date.
+    m_display->drawString(64, 36, "Check gas & sensor");
   }
 
   m_display->drawString(64, 52, "OK");

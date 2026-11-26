@@ -274,7 +274,7 @@ void setup() {
 
     // Mirror results to Serial / BT
     Serial.println("-- SYSTEM CHECK --");
-    Serial.println("  ADC1115 : " + String(chk_adc      ? "OK"    : "FAIL"));
+    Serial.println("  ADS1115 : " + String(chk_adc      ? "OK"    : "FAIL"));
     Serial.println("  INA219  : " + String(chk_ina      ? "OK"    : "FAIL"));
     Serial.println("  SHT4x   : " + String(chk_sht      ? "OK"    : "FAIL"));
     Serial.println("  RTC hw  : " + String(chk_rtc_hw   ? "OK"    : "FAIL"));
@@ -296,7 +296,7 @@ void setup() {
       display.drawString(126, y, ok ? "[ OK ]" : "[FAIL]");
     };
 
-    drawItem(24, "ADC1115", chk_adc);
+    drawItem(24, "ADS1115", chk_adc);
     drawItem(34, "INA219",  chk_ina);
     drawItem(44, "SHT4x",   chk_sht);
 
@@ -598,13 +598,19 @@ void setup() {
   //g_mainMenu->setCurrentMenu(13);
 }
 
-static void showSavedBanner(const char* msg) {
+// Full-screen confirmation banner. With a sub-line (e.g. a failure hint) the
+// title moves up and the banner stays longer so it can be read.
+static void showSavedBanner(const char* msg, const char* sub = nullptr) {
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.setFont(ArialMT_Plain_16);
-  display.drawString(64, 24, msg);
+  display.drawString(64, sub ? 16 : 24, msg);
+  if (sub) {
+    display.setFont(ArialMT_Plain_10);
+    display.drawString(64, 38, sub);
+  }
   display.display();
-  delay(700);
+  delay(sub ? 2000 : 700);
   display.clear();
   display.display();
   display.setFont(ArialMT_Plain_10);
@@ -650,7 +656,12 @@ void setupButtons()
     //  9=Hour 10=Minute 11=Range 12=BumpTest 13=Info
     if (idx == 1)                    showSavedBanner("ZERO SET");   // Cal Zero (in full flow)
     else if (idx == 3) {
-      showSavedBanner("CAL COMPLETE");
+      // Report the real span result (it used to say CAL COMPLETE even when
+      // the span was rejected and the old calibration was kept).
+      if (g_gasManager.wasCalibrationSuccessful())
+        showSavedBanner("CAL PASSED");
+      else
+        showSavedBanner("CAL FAILED", "Check gas & sensor");
       g_mainMenu->setCurrentMenu(0);   // Return to Run after span
       syncTimeFromRTC();
       return;
