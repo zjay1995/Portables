@@ -53,3 +53,11 @@
 #ifndef FEATURE_WIDE_CLICK_WINDOW
   #define FEATURE_WIDE_CLICK_WINDOW  1
 #endif
+
+// Holding DOWN on the Hour / Minute screens keeps stepping the value:
+// first repeat after 0.5 s, then ~5 steps/s, ~12 steps/s after 2 s held.
+// Releasing stops without an extra step; the value is still saved only by S.
+// 0 = original behaviour (one step per press, holding does nothing).
+#ifndef FEATURE_HOLD_TO_SCROLL
+  #define FEATURE_HOLD_TO_SCROLL  1
+#endif

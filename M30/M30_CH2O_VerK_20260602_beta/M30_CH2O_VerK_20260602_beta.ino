@@ -643,6 +643,14 @@ void setupButtons()
     }
 
   });
+#if FEATURE_HOLD_TO_SCROLL
+  // Holding DOWN keeps stepping only on the Hour (9) / Minute (10) screens.
+  // Elsewhere DOWN has one-shot meanings (e.g. on Run it starts calibration).
+  keyboard->addDownRepeatAllowedFctor([] {
+    int idx = g_mainMenu->getCurrentIndex();
+    return idx == 9 || idx == 10;
+  });
+#endif
   keyboard->addOnSPressedFctor([] {
 
     g_sleepTimer.resetIdleCounter();

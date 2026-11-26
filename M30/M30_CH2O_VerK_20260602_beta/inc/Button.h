@@ -17,6 +17,9 @@ public:
 
 	virtual void onButtonPressUp(int pinNum, unsigned long pressDuration);
 	virtual void onButtonPressDown(int pinNum);
+	// Called on every tick while the button stays pressed (heldMillis since
+	// press-down). Default: ignore.
+	virtual void onButtonHeld(int pinNum, unsigned long heldMillis) {}
 };
 
 class ButtonPressDetector
@@ -57,6 +60,12 @@ public:
 			l->onButtonPressUp(m_pin, pressDuration);
 	}
 
+	void notifyHeldListeners(unsigned long heldMillis)
+	{
+		for(auto l : m_listeners)
+			l->onButtonHeld(m_pin, heldMillis);
+	}
+
 	int getPinNum() const { return m_pin; }
 
 	static void handleTick()
@@ -74,7 +83,8 @@ class DigitalReadSingleButtonPressDetector : public ButtonPressDetector
 	int 	m_currentPinState;
 	int		m_activePinState;
 
-	unsigned long m_pressDownStartMillis;
+	unsigned long m_pressDownStartMillis = 0;
+	bool          m_isDown = false;   // a press-down was seen and not yet released
 
 public:
 
@@ -100,15 +110,21 @@ public:
 			if(pinState == m_activePinState)
 			{
 				m_pressDownStartMillis = millis();
+				m_isDown = true;
 				notifyPressDownListeners();
 			}
 			else
 			{
 				unsigned long elapsedMillis = millis() - m_pressDownStartMillis;
+				m_isDown = false;
 				notifyPressUpListeners(elapsedMillis);
 				m_pressDownStartMillis = 0;
 			}
 			m_currentPinState = pinState;
+		}
+		else if(m_isDown && pinState == m_activePinState)
+		{
+			notifyHeldListeners(millis() - m_pressDownStartMillis);
 		}
 	}
 };
@@ -131,6 +147,21 @@ class Keyboard : ButtonPressListener
 	std::function<void()> m_onSPressed;
 	std::function<void()> m_onRightPressed;
     std::function<void()> m_onOnPressed;
+
+#if FEATURE_HOLD_TO_SCROLL
+	// Hold-to-scroll on DOWN (see FEATURE_HOLD_TO_SCROLL in BuildConfig.h)
+	// Enum constants (not static const members): usable in ?: under C++11
+	// without needing an out-of-class definition at link time.
+	enum : unsigned long {
+		kHoldFirstRepeatMs = 500,   // wait before repeating
+		kHoldRepeatMs      = 200,   // ~5 steps/s
+		kHoldFastAfterMs   = 2000,  // speed up after 2 s held
+		kHoldFastRepeatMs  = 80     // ~12 steps/s
+	};
+	std::function<bool()> m_downRepeatAllowed;            // true on screens that may scroll
+	int           m_downRepeats = 0;                      // repeats fired in this press
+	unsigned long m_downNextRepeatAt = kHoldFirstRepeatMs; // held-time of next repeat
+#endif
 
 public:
 
@@ -173,6 +204,28 @@ public:
 	void addOnRightPressedFctor(const std::function<void()>& f) { m_onRightPressed = f; }
     void addOnOnPressedFctor(const std::function<void()>& f) { m_onOnPressed = f; }
 
+#if FEATURE_HOLD_TO_SCROLL
+	// Decides, at each repeat, whether the current screen allows hold-to-scroll.
+	void addDownRepeatAllowedFctor(const std::function<bool()>& f) { m_downRepeatAllowed = f; }
+
+	void onButtonHeld(int pinNum, unsigned long heldMillis)
+	{
+		if(m_buttonDownDetector->getPinNum() != pinNum) return;
+		if(!m_onDownPressed || !m_downRepeatAllowed || !m_downRepeatAllowed()) return;
+		if(heldMillis < m_downNextRepeatAt) return;
+
+		m_onDownPressed();
+		m_downRepeats++;
+		// Schedule from the previous due time, not from "now", so a slow main
+		// loop (display refresh) doesn't stretch every interval. If we fell
+		// more than a step behind, resync instead of firing a burst.
+		m_downNextRepeatAt +=
+			(heldMillis >= kHoldFastAfterMs ? kHoldFastRepeatMs : kHoldRepeatMs);
+		if(m_downNextRepeatAt < heldMillis)
+			m_downNextRepeatAt = heldMillis;
+	}
+#endif
+
     void addOnCalibrationComboPressedFctor(const std::function<void()>& f) { m_onCalibrationComboPressed = f; }
 
 	void onButtonPressUp(int pinNum, unsigned long pressDuration)
@@ -191,6 +244,17 @@ public:
 		if(m_buttonDownDetector->getPinNum() == pinNum)
 		{
 			m_buttonDownTotalMillis = pressDuration;
+#if FEATURE_HOLD_TO_SCROLL
+			// The hold already stepped the value; releasing must not add one more.
+			bool scrolled = (m_downRepeats > 0);
+			m_downRepeats = 0;
+			m_downNextRepeatAt = kHoldFirstRepeatMs;
+			if(scrolled)
+			{
+				m_buttonDownTotalMillis = 0;
+				return;
+			}
+#endif
 			if(
 				isNavClick(pressDuration) &&
 				m_buttonRightTotalMillis == 0 &&
@@ -260,6 +324,13 @@ public:
 	void onButtonPressDown(int pinNum)
 	{
 		Serial.println("Press down for pinNum:" + String(pinNum));
+#if FEATURE_HOLD_TO_SCROLL
+		if(m_buttonDownDetector->getPinNum() == pinNum)
+		{
+			m_downRepeats = 0;
+			m_downNextRepeatAt = kHoldFirstRepeatMs;
+		}
+#endif
 		if(m_buttonDownDetector->getPinNum() == pinNum)
 			m_buttonDownTotalMillis = 0;
         m_buttonRightTotalMillis = 0;
