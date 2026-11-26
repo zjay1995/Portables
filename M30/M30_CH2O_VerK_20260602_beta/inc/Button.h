@@ -153,10 +153,10 @@ class Keyboard : ButtonPressListener
 	// Enum constants (not static const members): usable in ?: under C++11
 	// without needing an out-of-class definition at link time.
 	enum : unsigned long {
-		kHoldFirstRepeatMs = 500,   // wait before repeating
-		kHoldRepeatMs      = 200,   // ~5 steps/s
-		kHoldFastAfterMs   = 2000,  // speed up after 2 s held
-		kHoldFastRepeatMs  = 80     // ~12 steps/s
+		kHoldFirstRepeatMs = HOLD_SCROLL_FIRST_MS,      // tunables in BuildConfig.h
+		kHoldRepeatMs      = HOLD_SCROLL_STEP_MS,
+		kHoldFastAfterMs   = HOLD_SCROLL_FAST_AFTER_MS,
+		kHoldFastRepeatMs  = HOLD_SCROLL_FAST_STEP_MS
 	};
 	std::function<bool()> m_downRepeatAllowed;            // true on screens that may scroll
 	int           m_downRepeats = 0;                      // repeats fired in this press

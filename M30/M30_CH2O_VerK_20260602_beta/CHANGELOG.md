@@ -29,8 +29,10 @@ or tested on a unit. After flashing, **recalibrate (zero + span)**.
   line fixed too. `c11b585`
 
 ### Buttons
-- **Hold DOWN to scroll** on the Hour / Minute screens (0→59 in about 6 s).
-  `a9dd3cb`
+- **Hold DOWN to scroll** on the Hour / Minute screens. `a9dd3cb`; slowed down
+  afterwards to 4 steps/s, then 8 steps/s after 2.5 s held (hour lap ~4.4 s,
+  0→59 minutes ~8.9 s). Speed is tunable via `HOLD_SCROLL_*` in
+  `inc/BuildConfig.h`.
 - DOWN / S / RIGHT accept any 30–800 ms press (was 110–310 ms; quick taps were
   ignored). The ON (power) button is unchanged. `154190e`
 - **Any key (DOWN / S / RIGHT) exits the Info page.** `c11b585`

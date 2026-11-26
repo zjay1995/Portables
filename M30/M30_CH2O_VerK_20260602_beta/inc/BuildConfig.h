@@ -55,12 +55,17 @@
 #endif
 
 // Holding DOWN on the Hour / Minute screens keeps stepping the value:
-// first repeat after 0.5 s, then ~5 steps/s, ~12 steps/s after 2 s held.
+// first repeat after 0.6 s, then 4 steps/s, 8 steps/s after 2.5 s held
+// (full hour lap ~4.4 s, 0->59 minutes ~8.9 s). Tune with HOLD_SCROLL_* below.
 // Releasing stops without an extra step; the value is still saved only by S.
 // 0 = original behaviour (one step per press, holding does nothing).
 #ifndef FEATURE_HOLD_TO_SCROLL
   #define FEATURE_HOLD_TO_SCROLL  1
 #endif
+#define HOLD_SCROLL_FIRST_MS      600   // hold this long before the first repeat
+#define HOLD_SCROLL_STEP_MS       250   // then one step every 250 ms (4/s)
+#define HOLD_SCROLL_FAST_AFTER_MS 2500  // speed up once held this long
+#define HOLD_SCROLL_FAST_STEP_MS  125   // then one step every 125 ms (8/s)
 
 // Settings-screen footer labels: SKIP (RIGHT key: next screen, unsaved change
 // discarded) · SAVE (S key) · drawn down-arrow (DOWN key: next value).
